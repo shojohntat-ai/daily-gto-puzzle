@@ -2,86 +2,73 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Daily GTO Puzzle</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app-container">
-  <div id="game-screen">
+  
+  <!-- ▼ ゲーム画面 ▼ -->
+  <div id="game-screen" class="screen-layout">
     <div class="header">
-      <h1 class="title">Daily GTO Puzzle</h1>
-      <button id="back-to-result-btn" style="display: none; background: #444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;" onclick="backToResult()">🔙 リザルトへ戻る</button>
-      <div class="level-badge" id="level-badge">🔰 初級 1/5</div>
+      <div class="title">GTO Puzzle</div>
+      <div class="level-badge" id="level-badge"></div>
     </div>
 
-    <div class="context-panel">
-      <div class="context-item">
-        <span class="context-label">Position</span>
-        <span id="position-text"></span>
-      </div>
-      <div class="context-item">
-        <span class="context-label">Preflop</span>
-        <span id="preflop-text"></span>
-      </div>
-      
-      <div class="table-info">
-        <div>💰 Pot: <strong id="pot-text"></strong></div>
-        <div>🥞 Eff Stack: <strong id="stack-text"></strong></div>
-      </div>
-
-      <div style="margin-top: 15px;">
-        <span class="context-label" id="street-label">Board</span>
-        <div class="cards-container" id="board-cards"></div>
-      </div>
-      <div style="margin-top: 10px;">
-        <span class="context-label" style="color: #fff; font-weight: bold;">Hero</span>
-        <div class="cards-container" id="hero-cards"></div>
-      </div>
+    <div class="info-bar">
+      <div>📍 <span id="position-text"></span></div>
+      <div>💰 Pot: <span id="pot-text" style="color: #fff; font-weight: bold;"></span></div>
+      <div>🥞 Stack: <span id="stack-text"></span></div>
     </div>
 
-    <div class="question-prompt" id="question-prompt"></div>
+    <div class="board-area">
+      <div class="area-label" id="street-label"></div>
+      <div class="cards-container" id="board-cards"></div>
+    </div>
 
-    <div class="choices" id="choices"></div>
+    <div class="hero-area">
+      <div class="hero-badge" id="hero-badge"></div>
+      <div class="cards-container" id="hero-cards"></div>
+    </div>
 
-    <div class="feedback-panel" id="feedback-panel">
-      <div class="ev-result" id="ev-result"></div>
-      <div class="solver-bars" id="solver-bars"></div>
+    <div class="action-area" id="action-area">
+      <div class="question-prompt" id="question-prompt"></div>
       
-      <!-- 新設：アクションの結果（相手の行動やハンドの結末）を独立表示 -->
-      <div class="action-outcome" id="action-outcome"></div>
+      <!-- 選択肢ボタンエリア -->
+      <div class="choices" id="choices"></div>
 
-      <!-- 既存：GTOの理論解説 -->
-      <div class="explanation-box">
-        <div class="explanation-title">💡 GTO解説</div>
-        <div class="explanation" id="explanation-text"></div>
+      <!-- アクション後の即時フィードバック（ボタン選択後にフェードイン） -->
+      <div id="instant-feedback" class="instant-feedback" style="display: none;">
+        <div class="system-message" id="system-message"></div>
+        <div class="short-explanation" id="short-explanation"></div>
+        <button class="next-btn" id="next-btn" onclick="nextStep()"></button>
       </div>
-      
-      <div class="premium-upsell" id="premium-upsell" style="display: none;">
-        <div class="premium-blur-text">詳細なレンジ分析と、このアクションが選ばれる数学的な理由...</div>
-        <button class="premium-btn" onclick="alert('Google Pay / Apple Pay 決済画面へ遷移 (Stripe連携予定)')">🔒 プレミアムで詳細解説を読む</button>
-      </div>
-
-      <button class="next-btn" id="next-street-btn" onclick="nextStep()">次へ</button>
     </div>
   </div>
 
-  <div id="result-screen">
-    <h2>Daily Challenge 完了！</h2>
+  <!-- ▼ リザルト＆振り返り画面 ▼ -->
+  <div id="result-screen" class="screen-layout" style="display: none; overflow-y: auto;">
+    <h2 style="text-align: center; margin-top: 10px;">Challenge 完了！</h2>
     <div class="emoji-grid" id="emoji-grid"></div>
-    <p id="total-ev" style="font-size: 1.2em; font-weight: bold; margin-bottom: 20px;"></p>
+    <p id="total-ev" style="text-align: center; font-size: 1.2em; font-weight: bold;"></p>
     
-    <button class="next-btn" style="background-color: #444; margin-bottom: 30px;" onclick="startReview()">👀 今日のハンドを振り返る</button>
+    <button class="next-btn" style="background-color: var(--correct); margin-bottom: 30px;" onclick="shareResult()">📋 結果をコピーしてシェア</button>
+
+    <!-- 振り返りリストエリア -->
+    <div class="review-section">
+      <h3 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;">👀 今日のプレイを振り返る</h3>
+      <div id="review-list"></div>
+    </div>
     
     <div class="premium-banner">
       <div class="premium-title">📚 さらにGTOを極めたい方へ</div>
-      <div class="premium-desc">過去100問以上の厳選シチュエーションと、ソルバーによる詳細なレンジ解析データをすべて開放します。</div>
-      <button class="buy-btn" onclick="alert('Google Pay / Apple Pay 決済画面へ遷移 (Stripe連携予定)')">🔒 Season 1 過去問パックをアンロック (¥1,000)</button>
+      <div class="premium-desc">過去100問以上の厳選シチュエーションと、詳細なレンジ解析データをすべて開放。</div>
+      <button class="buy-btn" onclick="alert('決済画面へ遷移 (Stripe連携予定)')">🔒 Season 1 過去問パック (¥1,000)</button>
     </div>
-
-    <button class="next-btn" style="background-color: var(--correct); margin-top: 20px;" onclick="shareResult()">結果をコピーしてシェア</button>
   </div>
+
 </div>
 
 <script src="script.js"></script>
