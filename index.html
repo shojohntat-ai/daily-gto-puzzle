@@ -3,69 +3,191 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Daily GTO Puzzle</title>
+  <title>Daily Poker Theory</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app-container">
-  
-  <!-- ▼ ゲーム画面 ▼ -->
-  <div id="game-screen" class="screen-layout">
-    <div class="header">
-      <div class="title">GTO Puzzle</div>
-      <div class="level-badge" id="level-badge"></div>
+
+  <!-- ▼ 1. ホーム画面（新設：レベル選択・概要・履歴） ▼ -->
+  <div id="home-screen" class="screen-layout home-scroll">
+    <div class="home-header">
+      <div class="logo-badge">DAILY PUZZLE</div>
+      <h1 class="home-title">♠️ Poker Theory</h1>
+      <p class="home-subtitle">1日3分で「勝てる定石」が身につくポーカーパズル</p>
     </div>
 
+    <!-- プレイヤー通算成績（履歴ダッシュボード） -->
+    <div class="stats-dashboard">
+      <div class="stat-box">
+        <div class="stat-value" id="stat-played">0</div>
+        <div class="stat-label">クリア回数</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-profit" style="color: #ffd700;">±0 BB</div>
+        <div class="stat-label">通算獲得スコア</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-best-rate">0%</div>
+        <div class="stat-label">最善手率</div>
+      </div>
+    </div>
+
+    <!-- ゲームルール概要 -->
+    <div class="about-card">
+      <div class="about-title">💡 遊び方（100 BBスタート）</div>
+      <ul class="about-list">
+        <li>フロップからリバーまで、状況に応じた<strong>最善の定石</strong>を選択します。</li>
+        <li><strong>🏆 最善手ボーナス (+15 BB〜)</strong> と <strong>💰 ポット収支</strong> の合計でスタックが増減！</li>
+        <li>危険なリバーで<strong>「正しく降りる（ナイスフォールド）」</strong>ことができれば、ボーナスでスタックが増える設計です。</li>
+      </ul>
+    </div>
+
+    <!-- 難易度選択エリア -->
+    <div class="section-label">🎯 挑戦するレベルを選択</div>
+    <div class="level-select-list">
+      <button class="level-card" onclick="startGame('初心者')">
+        <div class="level-card-left">
+          <span class="level-icon">🔰</span>
+          <div>
+            <div class="level-name">初心者コース</div>
+            <div class="level-desc">トップペアの価値最大化と基本のベットサイズ</div>
+          </div>
+        </div>
+        <span class="level-arrow">▶</span>
+      </button>
+
+      <button class="level-card" onclick="startGame('中級者')">
+        <div class="level-card-left">
+          <span class="level-icon">⚔️</span>
+          <div>
+            <div class="level-name">中級者コース</div>
+            <div class="level-desc">3ベットポット・ウェットボード・タフフォールド</div>
+          </div>
+        </div>
+        <span class="level-arrow">▶</span>
+      </button>
+
+      <!-- 未開放レベル -->
+      <button class="level-card locked" onclick="alert('上級者コースは現在開発中です（近日公開予定！）')">
+        <div class="level-card-left">
+          <span class="level-icon">🔒</span>
+          <div>
+            <div class="level-name">上級者コース <span class="coming-soon">COMING SOON</span></div>
+            <div class="level-desc">ブラフキャッチャー・ポラライズドレンジの攻防</div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <!-- 最近のプレイ履歴 -->
+    <div class="section-label" style="margin-top: 15px;">📜 最近のプレイ履歴</div>
+    <div id="recent-history-list" class="recent-history"></div>
+  </div>
+  
+  <!-- ▼ 2. ゲーム画面（1画面完結・スタック統合版） ▼ -->
+  <div id="game-screen" class="screen-layout" style="display: none;">
+    <div class="header">
+      <button class="back-home-btn" onclick="returnToHome()">✕ 中断</button>
+      <div class="title">♠️ Poker Theory</div>
+      <div class="level-badge" id="difficulty-badge">初心者</div>
+    </div>
+
+    <!-- ハンドテーマ＆進捗 -->
+    <div class="sub-header">
+      <span id="hand-theme"></span>
+      <span id="hand-progress" class="progress-pill"></span>
+    </div>
+
+    <!-- 統合インフォバー（ポジション・ポット・自分の持ちスタックに一本化） -->
     <div class="info-bar">
       <div>📍 <span id="position-text"></span></div>
-      <div>💰 Pot: <span id="pot-text" style="color: #fff; font-weight: bold;"></span></div>
-      <div>🥞 Stack: <span id="stack-text"></span></div>
+      <div class="pot-pill">💰 Pot: <span id="pot-text"></span> BB</div>
+      <div class="stack-pill" id="stack-display">🥞 Stack: <span id="stack-text">100</span> BB</div>
     </div>
 
-    <div class="board-area">
-      <div class="area-label" id="street-label"></div>
-      <div class="cards-container" id="board-cards"></div>
+    <!-- テーブルエリア -->
+    <div class="table-area">
+      <!-- 相手（Villain） -->
+      <div class="villain-row">
+        <div class="villain-info">
+          <span class="villain-label">👤 相手 (<span id="villain-pos">BB</span>)</span>
+          <div class="action-bubble" id="villain-action">Check</div>
+        </div>
+        <div class="cards-container mini" id="villain-cards">
+          <div class="card back"></div>
+          <div class="card back"></div>
+        </div>
+      </div>
+
+      <!-- ボード -->
+      <div class="board-area">
+        <div class="area-label" id="street-label">FLOP</div>
+        <div class="cards-container" id="board-cards"></div>
+      </div>
+
+      <!-- 自分（Hero） -->
+      <div class="hero-row">
+        <div class="cards-container" id="hero-cards"></div>
+        <div class="hero-status">
+          <div class="hero-badge" id="hero-badge"></div>
+          <div class="invest-text">ポット投資中: <span id="hero-invested">0</span> BB</div>
+        </div>
+      </div>
     </div>
 
-    <div class="hero-area">
-      <div class="hero-badge" id="hero-badge"></div>
-      <div class="cards-container" id="hero-cards"></div>
-    </div>
+    <!-- アクション＆フィードバック切り替えエリア -->
+    <div class="interaction-zone">
+      <!-- 状態A: 質問と2x2選択肢 -->
+      <div id="choice-state" class="state-panel">
+        <div class="question-prompt" id="question-prompt"></div>
+        <div class="choices-grid" id="choices"></div>
+      </div>
 
-    <div class="action-area" id="action-area">
-      <div class="question-prompt" id="question-prompt"></div>
-      
-      <!-- 選択肢ボタンエリア -->
-      <div class="choices" id="choices"></div>
-
-      <!-- アクション後の即時フィードバック（ボタン選択後にフェードイン） -->
-      <div id="instant-feedback" class="instant-feedback" style="display: none;">
+      <!-- 状態B: 選択後の即時フィードバック -->
+      <div id="feedback-state" class="state-panel" style="display: none;">
+        <div class="feedback-header">
+          <span class="feedback-grade" id="feedback-result"></span>
+          <span class="selected-action-tag" id="selected-action-tag"></span>
+        </div>
         <div class="system-message" id="system-message"></div>
-        <div class="short-explanation" id="short-explanation"></div>
         <button class="next-btn" id="next-btn" onclick="nextStep()"></button>
       </div>
     </div>
   </div>
 
-  <!-- ▼ リザルト＆振り返り画面 ▼ -->
-  <div id="result-screen" class="screen-layout" style="display: none; overflow-y: auto;">
-    <h2 style="text-align: center; margin-top: 10px;">Challenge 完了！</h2>
-    <div class="emoji-grid" id="emoji-grid"></div>
-    <p id="total-ev" style="text-align: center; font-size: 1.2em; font-weight: bold;"></p>
+  <!-- ▼ 3. リザルト＆振り返り画面 ▼ -->
+  <div id="result-screen" class="screen-layout result-scroll" style="display: none;">
+    <h2 style="text-align: center; margin: 5px 0;">Challenge 完了！</h2>
     
-    <button class="next-btn" style="background-color: var(--correct); margin-bottom: 30px;" onclick="shareResult()">📋 結果をコピーしてシェア</button>
+    <div class="result-score-card">
+      <div style="font-size: 0.85em; color: #aaa;">最終スタック (100 BBスタート)</div>
+      <div style="font-size: 1.8em; font-weight: bold; color: #ffd700; margin: 4px 0;">
+        🥞 <span id="final-score">100</span> BB
+      </div>
+      <div id="score-diff-text" style="font-size: 0.95em; font-weight: bold;"></div>
+    </div>
 
-    <!-- 振り返りリストエリア -->
+    <!-- Wordle風 絵文字グリッド -->
+    <div class="emoji-grid" id="emoji-grid"></div>
+    
+    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+      <button class="next-btn share-btn" style="flex: 2; margin-bottom: 0;" onclick="shareResult()">📋 結果をシェア</button>
+      <button class="next-btn" style="flex: 1; background-color: #3d4350;" onclick="returnToHome()">🏠 ホームへ</button>
+    </div>
+
+    <!-- 振り返りリスト（リワード広告モック付き） -->
     <div class="review-section">
-      <h3 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;">👀 今日のプレイを振り返る</h3>
+      <h3 style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 12px; font-size: 1em;">👀 今日のプレイを振り返る</h3>
       <div id="review-list"></div>
     </div>
     
+    <!-- プレミアム誘導バナー -->
     <div class="premium-banner">
-      <div class="premium-title">📚 さらにGTOを極めたい方へ</div>
-      <div class="premium-desc">過去100問以上の厳選シチュエーションと、詳細なレンジ解析データをすべて開放。</div>
-      <button class="buy-btn" onclick="alert('決済画面へ遷移 (Stripe連携予定)')">🔒 Season 1 過去問パック (¥1,000)</button>
+      <div class="premium-title">📚 定石（セオリー）を体系的に学ぶ</div>
+      <div class="premium-desc">過去100問以上の厳選シチュエーションと、上級者コースをすべて即時開放。</div>
+      <button class="buy-btn" onclick="alert('決済画面へ遷移 (Stripe連携予定)')">🔒 Season 1 フルパック (¥1,000)</button>
     </div>
   </div>
 

@@ -1,0 +1,226 @@
+[
+  {
+    "difficulty": "初心者",
+    "theme": "オーバーペアで最後まで価値を引き出す",
+    "position": "CO vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card h\">A♥</div><div class=\"card d\">A♦</div>",
+    "villainHand": "<div class=\"card d\">K♦</div><div class=\"card c\">J♣</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Check",
+        "board": "<div class=\"card s\">J♠</div><div class=\"card s\">T♠</div><div class=\"card d\">4♦</div>",
+        "badge": "🛡️ オーバーペア（ウェットボード）",
+        "prompt": "ストレートやフラッシュの待ちが多い危険なボードです。相手はチェック。",
+        "options": [
+          {
+            "text": "Check",
+            "grade": "bad",
+            "investCost": 4.0,
+            "theoryBonus": -15,
+            "shortExp": "危険なボードで無料カードは厳禁です",
+            "outcome": "定石の75% Betルートへ進行します",
+            "explanation": "スペードやQ、9が落ちると一気に形勢逆転されます。強気にベットして自分のハンドを守る（プロテクトする）必要があります。"
+          },
+          {
+            "text": "33% Bet (1.8 BB)",
+            "grade": "bad",
+            "investCost": 4.0,
+            "theoryBonus": -10,
+            "shortExp": "相手のドローに安い値段を提示しています",
+            "outcome": "定石の75% Betルートへ進行します",
+            "explanation": "つながりの強いウェットなボードで小さく打つと、相手のストレートドローやフラッシュドローに「安く引けるチャンス」を与えてしまいます。"
+          },
+          {
+            "text": "75% Bet (4.0 BB)",
+            "grade": "best",
+            "investCost": 4.0,
+            "theoryBonus": 15,
+            "shortExp": "ウェットボードの鉄則！大きく打つ",
+            "outcome": "あなた: 4.0BB Bet ➔ 相手: Call",
+            "explanation": "ドローが多いボードでは、大きめのサイズ（75%程度）を選び、Jヒットから価値を取りつつドロー勢に高い通行料を払わせるのが定石です。"
+          },
+          {
+            "text": "All-in (97.5 BB)",
+            "grade": "bad",
+            "investCost": 4.0,
+            "theoryBonus": -20,
+            "shortExp": "Jのワンペアに逃げられてしまいます",
+            "outcome": "定石の75% Betルートへ進行します",
+            "explanation": "AAで一番稼げるカモは「Jのトップペア」を持っている相手です。オールインすると彼らが全員降りてしまいます。"
+          }
+        ]
+      },
+      {
+        "name": "River",
+        "pot": "13.5",
+        "villainAction": "Check",
+        "board": "<div class=\"card s\">J♠</div><div class=\"card s\">T♠</div><div class=\"card d\">4♦</div><div class=\"card c\">2♣</div><div class=\"card h\">3♥</div>",
+        "badge": "👑 最強オーバーペア（ドロー不発）",
+        "prompt": "ターン・リバーと無害なカードが落ち、フラッシュもストレートも不発です。相手はチェック。",
+        "options": [
+          {
+            "text": "Check（ショーダウン）",
+            "grade": "bad",
+            "showdown": true,
+            "investCost": 0,
+            "theoryBonus": -15,
+            "handNetResult": 7.0,
+            "shortExp": "最後の稼ぎ時を逃しています！",
+            "outcome": "相手は K♦ J♣（トップペア）を持っていた！",
+            "explanation": "勝ってはいますが、相手はJのトップペアを持っていました。リバーでしっかりベットしていれば、さらに大きなチップを獲得できていました。"
+          },
+          {
+            "text": "70% Bet (9.5 BB)",
+            "grade": "best",
+            "showdown": true,
+            "investCost": 9.5,
+            "theoryBonus": 20,
+            "handNetResult": 16.5,
+            "shortExp": "ナイスバリュー！相手から最大回収！",
+            "outcome": "相手: Call！ 手札は K♦ J♣（Jヒット）➔ 完勝！",
+            "explanation": "ドローがすべて外れた安全なリバーでは、相手が持っているJのワンペア（KJやQJ）が喜んでコールしてくれるサイズ（60〜75%）でしっかり価値を取り切るのが定石です！"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "中級者",
+    "theme": "トップペアの進行とリバーの危機察知",
+    "position": "BTN vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card s\">A♠</div><div class=\"card c\">K♣</div>",
+    "villainHand": "<div class=\"card s\">Q♠</div><div class=\"card s\">J♠</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Check",
+        "board": "<div class=\"card s\">K♠</div><div class=\"card d\">7♦</div><div class=\"card h\">2♥</div>",
+        "badge": "👑 トップペア・最強キッカー",
+        "prompt": "相手はチェック。つながりの薄いドライボードです。いくらベットしますか？",
+        "options": [
+          {
+            "text": "Check",
+            "grade": "bad",
+            "investCost": 1.8,
+            "theoryBonus": -15,
+            "shortExp": "チップを稼ぐチャンスを逃しています",
+            "outcome": "本来はベットすべき場面（1.8BB投資ルートへ）",
+            "explanation": "最強のトップペアです。チェックすると相手の弱いペアやドローに無料でカードを見せてしまいます。"
+          },
+          {
+            "text": "33% Bet (1.8 BB)",
+            "grade": "best",
+            "investCost": 1.8,
+            "theoryBonus": 15,
+            "shortExp": "ドライボードの定石サイズ！",
+            "outcome": "あなた: 1.8BB Bet ➔ 相手: Call",
+            "explanation": "ドライなボードでは小さく（33%程度）打つことで、相手の弱いヒットやバックドアのドローから広くコールを引き出せます。"
+          },
+          {
+            "text": "75% Bet (4.1 BB)",
+            "grade": "ok",
+            "investCost": 1.8,
+            "theoryBonus": 5,
+            "shortExp": "少し大きすぎて相手が降りてしまいます",
+            "outcome": "相手: Call（定石の1.8BB投資ルートに補正）",
+            "explanation": "バリューを取りたい気持ちは正解ですが、このボードで大きく打つと相手のセカンドペア（7ヒットなど）が警戒して降りてしまいます。"
+          },
+          {
+            "text": "All-in (97.5 BB)",
+            "grade": "bad",
+            "investCost": 1.8,
+            "theoryBonus": -20,
+            "shortExp": "リスクとリターンが見合っていません",
+            "outcome": "定石の1.8BB投資ルートへ補正します",
+            "explanation": "いきなりオールインすると、自分が勝っている弱い手はすべて降り、セット（77や22）などの怪物ハンドにだけコールされて破産します。"
+          }
+        ]
+      },
+      {
+        "name": "Turn",
+        "pot": "9.1",
+        "villainAction": "Check",
+        "board": "<div class=\"card s\">K♠</div><div class=\"card d\">7♦</div><div class=\"card h\">2♥</div><div class=\"card s\">8♠</div>",
+        "badge": "👑 トップペア（スペード2枚目）",
+        "prompt": "8♠が落ちてフラッシュドローが生まれました。相手はチェック。",
+        "options": [
+          {
+            "text": "Check",
+            "grade": "bad",
+            "investCost": 6.0,
+            "theoryBonus": -15,
+            "shortExp": "ドローに無料でカードを見せてしまいます",
+            "outcome": "定石の6.0BB Betルートへ進行します",
+            "explanation": "スペードのドローやKQ・KJからしっかりチップを取るべき場面です。ここで止まるのはもったいないです。"
+          },
+          {
+            "text": "25% Bet (2.2 BB)",
+            "grade": "ok",
+            "investCost": 6.0,
+            "theoryBonus": 0,
+            "shortExp": "ドローに対して安すぎる値段です",
+            "outcome": "定石の6.0BB Betルートへ進行します",
+            "explanation": "ターンでドロー目が増えた時は、サイズを上げて相手に苦しい判断を迫るのが定石です。"
+          },
+          {
+            "text": "66% Bet (6.0 BB)",
+            "grade": "best",
+            "investCost": 6.0,
+            "theoryBonus": 15,
+            "shortExp": "価値の最大化＆ドローへの牽制！",
+            "outcome": "あなた: 6.0BB Bet ➔ 相手: Call",
+            "explanation": "ターンでは相手のハンドもある程度強いため、サイズを66%前後に引き上げてポットを育てつつ、ドローに高い代償を払わせます。"
+          },
+          {
+            "text": "150% Overbet",
+            "grade": "bad",
+            "investCost": 6.0,
+            "theoryBonus": -15,
+            "shortExp": "KQやKJまで降ろしてしまいます",
+            "outcome": "定石の6.0BB Betルートへ進行します",
+            "explanation": "ワンペアで極端なオーバーベットを打つと、カモにできるはずのKヒット（弱キッカー）に逃げられてしまいます。"
+          }
+        ]
+      },
+      {
+        "name": "River",
+        "pot": "21.1",
+        "villainAction": "🔥 All-in (89.7 BB)",
+        "board": "<div class=\"card s\">K♠</div><div class=\"card d\">7♦</div><div class=\"card h\">2♥</div><div class=\"card s\">8♠</div><div class=\"card s\">6♠</div>",
+        "badge": "🚨 危険ボード（3枚目のスペード）",
+        "prompt": "3枚目のスペードが落ちた瞬間、相手が突然89.7BBの特大オールイン！",
+        "options": [
+          {
+            "text": "Fold（降りる）",
+            "grade": "best",
+            "showdown": true,
+            "investCost": 0,
+            "theoryBonus": 30,
+            "handNetResult": -10.3,
+            "shortExp": "完璧な危機察知！致命傷を回避！",
+            "outcome": "相手の手札は Q♠ J♠（フラッシュ完成）！",
+            "explanation": "これまで合計10.3BBを投資しましたが、3枚目のスペードが落ちたリバーでの特大オールインにはワンペアはほぼ無力です。ここで潔く降りて損失を最小限（-10.3BB）に抑えるのが勝てるプレイヤーの絶対条件です！"
+          },
+          {
+            "text": "Call（全額勝負）",
+            "grade": "bad",
+            "showdown": true,
+            "investCost": 89.7,
+            "theoryBonus": -30,
+            "handNetResult": -100,
+            "shortExp": "相手のフラッシュの餌食になりました",
+            "outcome": "相手の手札は Q♠ J♠（フラッシュ）➔ 100BB全損",
+            "explanation": "「せっかくAKでここまでベットしたから」という執着（サンクコスト）はポーカー最大の敵です。ボードの変化を冷静に見て降りる勇気を持ちましょう。"
+          }
+        ]
+      }
+    ]
+  }
+]
