@@ -1,101 +1,12 @@
 [
   {
     "difficulty": "初心者",
-    "theme": "オーバーペアで最後まで価値を引き出す",
-    "position": "CO vs BB",
-    "villainPos": "BB",
-    "preflopInvested": 2.5,
-    "heroHand": "<div class=\"card h\">A♥</div><div class=\"card d\">A♦</div>",
-    "villainHand": "<div class=\"card d\">K♦</div><div class=\"card c\">J♣</div>",
-    "streets": [
-      {
-        "name": "Flop",
-        "pot": "5.5",
-        "villainAction": "Check",
-        "board": "<div class=\"card s\">J♠</div><div class=\"card s\">T♠</div><div class=\"card d\">4♦</div>",
-        "badge": "🛡️ オーバーペア（ウェットボード）",
-        "prompt": "ストレートやフラッシュの待ちが多い危険なボードです。相手はチェック。",
-        "options": [
-          {
-            "text": "Check",
-            "grade": "bad",
-            "investCost": 4.0,
-            "theoryBonus": -15,
-            "shortExp": "危険なボードで無料カードは厳禁です",
-            "outcome": "定石の75% Betルートへ進行します",
-            "explanation": "スペードやQ、9が落ちると一気に形勢逆転されます。強気にベットして自分のハンドを守る（プロテクトする）必要があります。"
-          },
-          {
-            "text": "33% Bet (1.8 BB)",
-            "grade": "bad",
-            "investCost": 4.0,
-            "theoryBonus": -10,
-            "shortExp": "相手のドローに安い値段を提示しています",
-            "outcome": "定石の75% Betルートへ進行します",
-            "explanation": "つながりの強いウェットなボードで小さく打つと、相手のストレートドローやフラッシュドローに「安く引けるチャンス」を与えてしまいます。"
-          },
-          {
-            "text": "75% Bet (4.0 BB)",
-            "grade": "best",
-            "investCost": 4.0,
-            "theoryBonus": 15,
-            "shortExp": "ウェットボードの鉄則！大きく打つ",
-            "outcome": "あなた: 4.0BB Bet ➔ 相手: Call",
-            "explanation": "ドローが多いボードでは、大きめのサイズ（75%程度）を選び、Jヒットから価値を取りつつドロー勢に高い通行料を払わせるのが定石です。"
-          },
-          {
-            "text": "All-in (97.5 BB)",
-            "grade": "bad",
-            "investCost": 4.0,
-            "theoryBonus": -20,
-            "shortExp": "Jのワンペアに逃げられてしまいます",
-            "outcome": "定石の75% Betルートへ進行します",
-            "explanation": "AAで一番稼げるカモは「Jのトップペア」を持っている相手です。オールインすると彼らが全員降りてしまいます。"
-          }
-        ]
-      },
-      {
-        "name": "River",
-        "pot": "13.5",
-        "villainAction": "Check",
-        "board": "<div class=\"card s\">J♠</div><div class=\"card s\">T♠</div><div class=\"card d\">4♦</div><div class=\"card c\">2♣</div><div class=\"card h\">3♥</div>",
-        "badge": "👑 最強オーバーペア（ドロー不発）",
-        "prompt": "ターン・リバーと無害なカードが落ち、フラッシュもストレートも不発です。相手はチェック。",
-        "options": [
-          {
-            "text": "Check（ショーダウン）",
-            "grade": "bad",
-            "showdown": true,
-            "investCost": 0,
-            "theoryBonus": -15,
-            "handNetResult": 7.0,
-            "shortExp": "最後の稼ぎ時を逃しています！",
-            "outcome": "相手は K♦ J♣（トップペア）を持っていた！",
-            "explanation": "勝ってはいますが、相手はJのトップペアを持っていました。リバーでしっかりベットしていれば、さらに大きなチップを獲得できていました。"
-          },
-          {
-            "text": "70% Bet (9.5 BB)",
-            "grade": "best",
-            "showdown": true,
-            "investCost": 9.5,
-            "theoryBonus": 20,
-            "handNetResult": 16.5,
-            "shortExp": "ナイスバリュー！相手から最大回収！",
-            "outcome": "相手: Call！ 手札は K♦ J♣（Jヒット）➔ 完勝！",
-            "explanation": "ドローがすべて外れた安全なリバーでは、相手が持っているJのワンペア（KJやQJ）が喜んでコールしてくれるサイズ（60〜75%）でしっかり価値を取り切るのが定石です！"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "difficulty": "中級者",
-    "theme": "トップペアの進行とリバーの危機察知",
+    "theme": "① 強い手を引いたら素直に打つ",
     "position": "BTN vs BB",
     "villainPos": "BB",
     "preflopInvested": 2.5,
     "heroHand": "<div class=\"card s\">A♠</div><div class=\"card c\">K♣</div>",
-    "villainHand": "<div class=\"card s\">Q♠</div><div class=\"card s\">J♠</div>",
+    "villainHand": "<div class=\"card h\">K♥</div><div class=\"card d\">T♦</div>",
     "streets": [
       {
         "name": "Flop",
@@ -103,122 +14,235 @@
         "villainAction": "Check",
         "board": "<div class=\"card s\">K♠</div><div class=\"card d\">7♦</div><div class=\"card h\">2♥</div>",
         "badge": "👑 トップペア・最強キッカー",
-        "prompt": "相手はチェック。つながりの薄いドライボードです。いくらベットしますか？",
+        "prompt": "相手はチェック。つながりの薄いドライボードです。どうしますか？",
         "options": [
-          {
-            "text": "Check",
-            "grade": "bad",
-            "investCost": 1.8,
-            "theoryBonus": -15,
-            "shortExp": "チップを稼ぐチャンスを逃しています",
-            "outcome": "本来はベットすべき場面（1.8BB投資ルートへ）",
-            "explanation": "最強のトップペアです。チェックすると相手の弱いペアやドローに無料でカードを見せてしまいます。"
-          },
-          {
-            "text": "33% Bet (1.8 BB)",
-            "grade": "best",
-            "investCost": 1.8,
-            "theoryBonus": 15,
-            "shortExp": "ドライボードの定石サイズ！",
-            "outcome": "あなた: 1.8BB Bet ➔ 相手: Call",
-            "explanation": "ドライなボードでは小さく（33%程度）打つことで、相手の弱いヒットやバックドアのドローから広くコールを引き出せます。"
-          },
-          {
-            "text": "75% Bet (4.1 BB)",
-            "grade": "ok",
-            "investCost": 1.8,
-            "theoryBonus": 5,
-            "shortExp": "少し大きすぎて相手が降りてしまいます",
-            "outcome": "相手: Call（定石の1.8BB投資ルートに補正）",
-            "explanation": "バリューを取りたい気持ちは正解ですが、このボードで大きく打つと相手のセカンドペア（7ヒットなど）が警戒して降りてしまいます。"
-          },
-          {
-            "text": "All-in (97.5 BB)",
-            "grade": "bad",
-            "investCost": 1.8,
-            "theoryBonus": -20,
-            "shortExp": "リスクとリターンが見合っていません",
-            "outcome": "定石の1.8BB投資ルートへ補正します",
-            "explanation": "いきなりオールインすると、自分が勝っている弱い手はすべて降り、セット（77や22）などの怪物ハンドにだけコールされて破産します。"
-          }
+          { "text": "Check", "grade": "bad", "investCost": 1.8, "theoryBonus": -15, "shortExp": "稼げるチャンスを逃しています", "outcome": "定石の33% Betルートへ進行", "explanation": "強いトップペアができました。ポーカーの基本は「強い手は自分からベットしてチップを稼ぐ」ことです。チェックすると相手に無料で次のカードを見せてしまいます。" },
+          { "text": "33% Bet (1.8 BB)", "grade": "best", "investCost": 1.8, "theoryBonus": 15, "shortExp": "定石のバリューベット！", "outcome": "あなた: 1.8BB Bet ➔ 相手: Call", "explanation": "逆転されにくいドライなボードでは、小さく打つことで相手の弱いペア（Kヒットの弱キッカーなど）からも広くコールを引き出せます。" },
+          { "text": "75% Bet (4.1 BB)", "grade": "ok", "investCost": 1.8, "theoryBonus": 5, "shortExp": "少し大きすぎて警戒されます", "outcome": "定石の1.8BB投資ルートへ進行", "explanation": "悪くありませんが、大きく打ちすぎると相手が「負けている」と気づいて降りてしまい、チップを稼げなくなります。" },
+          { "text": "All-in", "grade": "bad", "investCost": 1.8, "theoryBonus": -20, "shortExp": "カモがすべて逃げてしまいます", "outcome": "定石の1.8BB投資ルートへ進行", "explanation": "いきなりオールインすると、自分が勝っている弱い手は全員降り、負けている手（77などのセット）にだけコールされて大損します。" }
         ]
-      },
+      }
+    ]
+  },
+  {
+    "difficulty": "初心者",
+    "theme": "② 外れた時は潔く諦める",
+    "position": "UTG vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card s\">A♠</div><div class=\"card d\">Q♦</div>",
+    "villainHand": "<div class=\"card h\">9♥</div><div class=\"card d\">8♦</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Bet 4.0 BB",
+        "board": "<div class=\"card c\">9♣</div><div class=\"card s\">8♠</div><div class=\"card h\">2♥</div>",
+        "badge": "💨 ノーペア（役なし）",
+        "prompt": "あなたには役もドローもありません。相手がいきなり大きめのベットを打ってきました。",
+        "options": [
+          { "text": "Fold", "grade": "best", "showdown": true, "investCost": 0, "theoryBonus": 20, "handNetResult": -2.5, "shortExp": "ナイスフォールド！無駄な出費を回避", "outcome": "相手は 9♥ 8♦（ツーペア）を持っていた！", "explanation": "ポーカーの基本その２、「外れたら無理せず降りる」。プリフロップで強いAQでも、フロップで空振りして相手が打ってきたら素直に諦めるのが一番チップを守れます。" },
+          { "text": "Call", "grade": "bad", "showdown": true, "investCost": 4.0, "theoryBonus": -15, "handNetResult": -6.5, "shortExp": "AかQが出ても負けている可能性があります", "outcome": "相手は 9♥ 8♦（ツーペア）➔ ターン以降でさらに失点", "explanation": "何も当たっていないのにコールするのは最悪の選択（コーリングステーション）です。仮にターンでAが落ちても、すでにツーペアの相手には勝てません。" },
+          { "text": "Raise (12 BB)", "grade": "bad", "showdown": true, "investCost": 12.0, "theoryBonus": -25, "handNetResult": -14.5, "shortExp": "無謀なブラフです", "outcome": "相手: 即コール (9♥ 8♦) ➔ 撃沈", "explanation": "相手が強気に出ているところで、根拠のないブラフを仕掛けるのは初心者が最もチップを溶かす原因です。" },
+          { "text": "All-in", "grade": "bad", "showdown": true, "investCost": 97.5, "theoryBonus": -30, "handNetResult": -100, "shortExp": "100BBをドブに捨てました", "outcome": "相手: Call (9♥ 8♦) ➔ 全損", "explanation": "当たっていないハンドで全額勝負するのは絶対にやめましょう。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "初心者",
+    "theme": "③ 強いドローは攻める（セミブラフ）",
+    "position": "BTN vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card h\">A♥</div><div class=\"card h\">5♥</div>",
+    "villainHand": "<div class=\"card s\">K♠</div><div class=\"card d\">Q♦</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Check",
+        "board": "<div class=\"card h\">J♥</div><div class=\"card h\">8♥</div><div class=\"card c\">2♣</div>",
+        "badge": "💧 ナッツフラッシュドロー",
+        "prompt": "ハートがあと1枚出れば最強のフラッシュです。相手はチェック。",
+        "options": [
+          { "text": "Check", "grade": "ok", "investCost": 2.5, "theoryBonus": 0, "shortExp": "悪くはないですが消極的です", "outcome": "定石の50% Betルートへ進行", "explanation": "無料で次のカードを見るのも一手ですが、主導権を握っているならベットして相手にプレッシャーをかける方が有利です。" },
+          { "text": "50% Bet (2.5 BB)", "grade": "best", "showdown": true, "investCost": 2.5, "theoryBonus": 20, "handNetResult": 3.0, "shortExp": "王道のセミブラフ成功！", "outcome": "相手: Fold（K♠ Q♦）➔ ポット獲得！", "explanation": "強いドローでベットすることを「セミブラフ」と呼びます。相手が降りて勝つ道と、フラッシュを引いて勝つ道の両方を狙える強力な定石です。" },
+          { "text": "150% Overbet", "grade": "bad", "investCost": 2.5, "theoryBonus": -15, "shortExp": "まだ役がないのにリスク過大です", "outcome": "定石の50% Betルートへ進行", "explanation": "まだワンペアすらできていない状態で特大ベットをすると、コールされた時の損失が大きすぎます。" },
+          { "text": "All-in", "grade": "bad", "investCost": 2.5, "theoryBonus": -20, "shortExp": "やりすぎです", "outcome": "定石の50% Betルートへ進行", "explanation": "相手のJヒットなどにコールされた場合、不利な勝負を強いられます。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "初心者",
+    "theme": "④ 弱いペアで執着しない",
+    "position": "BB vs BTN",
+    "villainPos": "BTN",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card s\">A♠</div><div class=\"card d\">4♦</div>",
+    "villainHand": "<div class=\"card h\">K♥</div><div class=\"card c\">J♣</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Bet 4.0 BB",
+        "board": "<div class=\"card s\">J♠</div><div class=\"card d\">8♦</div><div class=\"card h\">4♥</div>",
+        "badge": "🩹 ボトムペア（一番下のペア）",
+        "prompt": "あなたには一番弱い4のペア（ボトムペア）があります。相手が大きめのベットを打ってきました。",
+        "options": [
+          { "text": "Fold", "grade": "best", "showdown": true, "investCost": 0, "theoryBonus": 20, "handNetResult": -2.5, "shortExp": "ナイスフォールド！未練を断ち切りました", "outcome": "相手は K♥ J♣（トップペア）を持っていた！", "explanation": "ペアができていると降りづらいですが、ボトムペアは非常に弱い役です。相手が大きく打ってきたら、素直に降りるのが怪我をしないコツです。" },
+          { "text": "Call", "grade": "bad", "showdown": true, "investCost": 4.0, "theoryBonus": -15, "handNetResult": -6.5, "shortExp": "負けている可能性が高いです", "outcome": "相手は K♥ J♣（トップペア）➔ 失点", "explanation": "Jや8のペア相手には負けています。ボトムペアで粘るのは長期的にチップを減らします。" },
+          { "text": "Raise (12 BB)", "grade": "bad", "showdown": true, "investCost": 12.0, "theoryBonus": -20, "handNetResult": -14.5, "shortExp": "一番やってはいけない選択です", "outcome": "相手: 即コール (K♥ J♣) ➔ 撃沈", "explanation": "弱い手でレイズするのは、相手の強い手にだけコールされる最悪のパターンです。" },
+          { "text": "All-in", "grade": "bad", "showdown": true, "investCost": 97.5, "theoryBonus": -30, "handNetResult": -100, "shortExp": "全損しました", "outcome": "相手: Call (K♥ J♣) ➔ 全損", "explanation": "ボトムペアでのオールインは自殺行為です。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "初心者",
+    "theme": "⑤ 最強の役ができたら大きく稼ぐ",
+    "position": "BTN vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card c\">J♣</div><div class=\"card d\">T♦</div>",
+    "villainHand": "<div class=\"card s\">A♠</div><div class=\"card c\">9♣</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Check",
+        "board": "<div class=\"card h\">9♥</div><div class=\"card d\">8♦</div><div class=\"card s\">7♠</div>",
+        "badge": "🌊 ナッツストレート（最強のストレート）",
+        "prompt": "フロップでいきなり最強のストレートが完成しました！相手はチェック。",
+        "options": [
+          { "text": "Check", "grade": "bad", "investCost": 4.0, "theoryBonus": -15, "shortExp": "ポットが育ちません", "outcome": "定石の75% Betルートへ進行", "explanation": "強い手でチェックして罠を張る（スロープレイ）のは、ポットを大きくするチャンスを逃すため初心者にはおすすめしません。" },
+          { "text": "33% Bet (1.8 BB)", "grade": "ok", "investCost": 4.0, "theoryBonus": 0, "shortExp": "少し安すぎます", "outcome": "定石の75% Betルートへ進行", "explanation": "このボードは相手にも9ヒットやドローなどコールしやすい手が多くあるため、もっと大きく打って稼ぐべきです。" },
+          { "text": "75% Bet (4.0 BB)", "grade": "best", "showdown": true, "investCost": 4.0, "theoryBonus": 20, "handNetResult": 7.0, "shortExp": "しっかり稼ぐナイスバリュー！", "outcome": "相手: Call！ 手札は A♠ 9♣（トップペア）➔ 勝利！", "explanation": "最強の役ができたら、素直に大きめのベットをしてポットを育てるのが一番稼げる定石です！相手のトップペアなどが喜んで払ってくれます。" },
+          { "text": "All-in", "grade": "bad", "investCost": 4.0, "theoryBonus": -10, "shortExp": "相手が逃げてしまいます", "outcome": "定石の75% Betルートへ進行", "explanation": "いくら最強でも、いきなりオールインすると相手が怖がって降りてしまい、稼げるチップを取り逃がします。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "中級者",
+    "theme": "① レンジアドバンテージとCベット",
+    "position": "UTG vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card s\">A♠</div><div class=\"card d\">K♦</div>",
+    "villainHand": "<div class=\"card c\">8♣</div><div class=\"card h\">7♥</div>",
+    "streets": [
+      {
+        "name": "Flop",
+        "pot": "5.5",
+        "villainAction": "Check",
+        "board": "<div class=\"card d\">Q♦</div><div class=\"card d\">3♦</div><div class=\"card c\">2♣</div>",
+        "badge": "💨 ノーペア（レンジ有利ボード）",
+        "prompt": "あなたに役はありませんが、このボードはプリフロップのレイザーであるUTGに有利です。相手はチェック。",
+        "options": [
+          { "text": "Check", "grade": "bad", "investCost": 1.8, "theoryBonus": -15, "shortExp": "主導権を手放しています", "outcome": "定石の33% Betルートへ進行", "explanation": "QハイのドライボードはUTGのレンジ（AQ, KQ, AA, KK等）に非常に有利です。AKのハイカードでもCベットを打って主導権を握るべきです。" },
+          { "text": "33% Bet (1.8 BB)", "grade": "best", "showdown": true, "investCost": 1.8, "theoryBonus": 20, "handNetResult": 4.8, "shortExp": "レンジの有利を活かした完璧なCベット！", "outcome": "相手: Fold（8♣ 7♥）➔ ポット獲得！", "explanation": "自分のハンドが当たっていなくても、「レンジ全体が相手より強い」ボードでは小さく広くCベットを打つのがGTOの基本です。" },
+          { "text": "75% Bet (4.1 BB)", "grade": "bad", "investCost": 1.8, "theoryBonus": -10, "shortExp": "ブラフとしては高すぎます", "outcome": "定石の1.8BB投資ルートへ進行", "explanation": "ドライボードでのブラフCベットは、安いリスク（33%）で十分な効果が得られます。" },
+          { "text": "All-in", "grade": "bad", "investCost": 1.8, "theoryBonus": -25, "shortExp": "無謀なチップの無駄遣いです", "outcome": "定石の1.8BB投資ルートへ進行", "explanation": "レンジが有利だとしても、100BBをリスクに晒すブラフは割に合いません。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "中級者",
+    "theme": "② ターンでのポットコントロール",
+    "position": "BTN vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card s\">J♠</div><div class=\"card d\">9♦</div>",
+    "villainHand": "<div class=\"card h\">A♥</div><div class=\"card h\">J♥</div>",
+    "streets": [
       {
         "name": "Turn",
         "pot": "9.1",
         "villainAction": "Check",
-        "board": "<div class=\"card s\">K♠</div><div class=\"card d\">7♦</div><div class=\"card h\">2♥</div><div class=\"card s\">8♠</div>",
-        "badge": "👑 トップペア（スペード2枚目）",
-        "prompt": "8♠が落ちてフラッシュドローが生まれました。相手はチェック。",
+        "board": "<div class=\"card c\">J♣</div><div class=\"card d\">7♦</div><div class=\"card s\">4♠</div><div class=\"card c\">K♣</div>",
+        "badge": "👑 セカンドペア（Kの出現）",
+        "prompt": "フロップでトップペアになりベットしましたが、ターンでKが落ちました。相手はチェック。",
         "options": [
-          {
-            "text": "Check",
-            "grade": "bad",
-            "investCost": 6.0,
-            "theoryBonus": -15,
-            "shortExp": "ドローに無料でカードを見せてしまいます",
-            "outcome": "定石の6.0BB Betルートへ進行します",
-            "explanation": "スペードのドローやKQ・KJからしっかりチップを取るべき場面です。ここで止まるのはもったいないです。"
-          },
-          {
-            "text": "25% Bet (2.2 BB)",
-            "grade": "ok",
-            "investCost": 6.0,
-            "theoryBonus": 0,
-            "shortExp": "ドローに対して安すぎる値段です",
-            "outcome": "定石の6.0BB Betルートへ進行します",
-            "explanation": "ターンでドロー目が増えた時は、サイズを上げて相手に苦しい判断を迫るのが定石です。"
-          },
-          {
-            "text": "66% Bet (6.0 BB)",
-            "grade": "best",
-            "investCost": 6.0,
-            "theoryBonus": 15,
-            "shortExp": "価値の最大化＆ドローへの牽制！",
-            "outcome": "あなた: 6.0BB Bet ➔ 相手: Call",
-            "explanation": "ターンでは相手のハンドもある程度強いため、サイズを66%前後に引き上げてポットを育てつつ、ドローに高い代償を払わせます。"
-          },
-          {
-            "text": "150% Overbet",
-            "grade": "bad",
-            "investCost": 6.0,
-            "theoryBonus": -15,
-            "shortExp": "KQやKJまで降ろしてしまいます",
-            "outcome": "定石の6.0BB Betルートへ進行します",
-            "explanation": "ワンペアで極端なオーバーベットを打つと、カモにできるはずのKヒット（弱キッカー）に逃げられてしまいます。"
-          }
+          { "text": "Check", "grade": "best", "showdown": true, "investCost": 0, "theoryBonus": 20, "handNetResult": -2.5, "shortExp": "絶妙なポットコントロール！", "outcome": "相手は A♥ J♥（キッカー勝ち）を持っていた！最小損失で回避！", "explanation": "ターンのKは相手のコールレンジ（KJ, KQなど）にヒットしやすい危険なカードです。Jヒットの弱キッカー（J9）は価値が下がったため、ここでチェックしてポットを小さく保つのが中級者の必須スキルです。" },
+          { "text": "33% Bet (3.0 BB)", "grade": "bad", "showdown": true, "investCost": 3.0, "theoryBonus": -15, "handNetResult": -5.5, "shortExp": "自ら傷口を広げています", "outcome": "相手: Call (A♥ J♥) ➔ 失点増加", "explanation": "ここでベットしても、自分が勝っている弱いペアは降り、負けているKヒットやAJ・QJにだけコールされてしまいます（逆バリュー）。" },
+          { "text": "75% Bet (6.8 BB)", "grade": "bad", "showdown": true, "investCost": 6.8, "theoryBonus": -20, "handNetResult": -9.3, "shortExp": "負けている手に貢ぐ結果になります", "outcome": "相手: Call (A♥ J♥) ➔ 大幅失点", "explanation": "中間的な強さのハンド（マージナルハンド）でポットを無駄に膨らませるのは避けましょう。" },
+          { "text": "All-in", "grade": "bad", "showdown": true, "investCost": 97.5, "theoryBonus": -30, "handNetResult": -100, "shortExp": "最悪のタイミングでのブラフです", "outcome": "相手: Call (A♥ J♥)", "explanation": "ショーダウンバリュー（チェックで回れば勝てる可能性がある価値）がある手でオールインブラフをする必要はありません。" }
         ]
-      },
+      }
+    ]
+  },
+  {
+    "difficulty": "中級者",
+    "theme": "③ リバーの薄いバリュー（シンバリュー）",
+    "position": "CO vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card h\">A♥</div><div class=\"card s\">J♠</div>",
+    "villainHand": "<div class=\"card d\">J♦</div><div class=\"card d\">T♦</div>",
+    "streets": [
       {
         "name": "River",
-        "pot": "21.1",
-        "villainAction": "🔥 All-in (89.7 BB)",
-        "board": "<div class=\"card s\">K♠</div><div class=\"card d\">7♦</div><div class=\"card h\">2♥</div><div class=\"card s\">8♠</div><div class=\"card s\">6♠</div>",
-        "badge": "🚨 危険ボード（3枚目のスペード）",
-        "prompt": "3枚目のスペードが落ちた瞬間、相手が突然89.7BBの特大オールイン！",
+        "pot": "14.0",
+        "villainAction": "Check",
+        "board": "<div class=\"card c\">J♣</div><div class=\"card s\">8♠</div><div class=\"card h\">4♥</div><div class=\"card c\">2♣</div><div class=\"card s\">2♠</div>",
+        "badge": "👑 トップペア・最強キッカー",
+        "prompt": "フロップあなたがベット、ターンはお互いチェック。リバーは無害な2で相手はチェックしました。",
         "options": [
-          {
-            "text": "Fold（降りる）",
-            "grade": "best",
-            "showdown": true,
-            "investCost": 0,
-            "theoryBonus": 30,
-            "handNetResult": -10.3,
-            "shortExp": "完璧な危機察知！致命傷を回避！",
-            "outcome": "相手の手札は Q♠ J♠（フラッシュ完成）！",
-            "explanation": "これまで合計10.3BBを投資しましたが、3枚目のスペードが落ちたリバーでの特大オールインにはワンペアはほぼ無力です。ここで潔く降りて損失を最小限（-10.3BB）に抑えるのが勝てるプレイヤーの絶対条件です！"
-          },
-          {
-            "text": "Call（全額勝負）",
-            "grade": "bad",
-            "showdown": true,
-            "investCost": 89.7,
-            "theoryBonus": -30,
-            "handNetResult": -100,
-            "shortExp": "相手のフラッシュの餌食になりました",
-            "outcome": "相手の手札は Q♠ J♠（フラッシュ）➔ 100BB全損",
-            "explanation": "「せっかくAKでここまでベットしたから」という執着（サンクコスト）はポーカー最大の敵です。ボードの変化を冷静に見て降りる勇気を持ちましょう。"
-          }
+          { "text": "Check", "grade": "bad", "showdown": true, "investCost": 0, "theoryBonus": -15, "handNetResult": 7.0, "shortExp": "安全すぎます。利益を取り逃がしました", "outcome": "相手は J♦ T♦ を持っていた！", "explanation": "ターン・リバーと相手がチェックしているため、相手に強い手はほぼありません。チェックで終わらせるのは非常にもったいないです。" },
+          { "text": "50% Bet (7.0 BB)", "grade": "best", "showdown": true, "investCost": 7.0, "theoryBonus": 25, "handNetResult": 14.0, "shortExp": "完璧なシンバリュー！", "outcome": "相手: Call！ 手札は J♦ T♦ ➔ 追加チップ獲得！", "explanation": "あなたがターンでチェックしたため、相手はこちらの弱みを疑っています。そこでリバーで手頃な50%を打つと、相手の弱いJヒットや8ヒットがブラフキャッチでコールしてくれます。これが「薄いバリューを取る」技術です。" },
+          { "text": "120% Overbet (16.8 BB)", "grade": "bad", "showdown": true, "investCost": 0, "theoryBonus": -15, "handNetResult": 7.0, "shortExp": "大きすぎて警戒されました", "outcome": "相手: Fold (J♦ T♦)", "explanation": "弱い手からコールをもらうには、相手が払える適切なサイズを選ぶ必要があります。" },
+          { "text": "All-in", "grade": "bad", "showdown": true, "investCost": 0, "theoryBonus": -20, "handNetResult": 7.0, "shortExp": "相手がコールできません", "outcome": "相手: Fold", "explanation": "オールインはナッツ級のバリューか、完全なブラフの時に使うべきです。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "中級者",
+    "theme": "④ ブロッカーを活かしたリバーブラフ",
+    "position": "BTN vs BB",
+    "villainPos": "BB",
+    "preflopInvested": 2.5,
+    "heroHand": "<div class=\"card s\">A♠</div><div class=\"card h\">Q♥</div>",
+    "villainHand": "<div class=\"card d\">J♦</div><div class=\"card s\">J♠</div>",
+    "streets": [
+      {
+        "name": "River",
+        "pot": "22.0",
+        "villainAction": "Check",
+        "board": "<div class=\"card s\">T♠</div><div class=\"card s\">8♠</div><div class=\"card d\">4♦</div><div class=\"card c\">2♣</div><div class=\"card s\">3♠</div>",
+        "badge": "💨 Aハイ（A♠所持）",
+        "prompt": "リバーで3枚目のスペードが落ちました。あなたに役はありませんが「A♠」を持っています。相手はチェック。",
+        "options": [
+          { "text": "Check", "grade": "bad", "showdown": true, "investCost": 0, "theoryBonus": -15, "handNetResult": -11.0, "shortExp": "Aハイでは勝てません", "outcome": "相手は J♦ J♠（ワンペア）を持っていた！敗北。", "explanation": "チェックでショーダウンしても、Aハイでは相手のペアに負けてしまいます。" },
+          { "text": "33% Bet (7.2 BB)", "grade": "bad", "showdown": true, "investCost": 7.2, "theoryBonus": -15, "handNetResult": -18.2, "shortExp": "ブラフとしては安すぎます", "outcome": "相手: Call (J♦ J♠) ➔ 敗北", "explanation": "安いブラフは相手のワンペアに簡単にコール（ブラフキャッチ）されてしまいます。" },
+          { "text": "75% Bet (16.5 BB)", "grade": "best", "showdown": true, "investCost": 16.5, "theoryBonus": 30, "handNetResult": 11.0, "shortExp": "A♠ブロッカーの極上ブラフ！", "outcome": "相手: 悩んだ末に Fold (J♦ J♠) ➔ 大逆転勝利！", "explanation": "あなたは「A♠（最強のフラッシュを作るカード）」を持っています。つまり「相手は絶対に最強のフラッシュを持っていない」という確証（ブロッカー）があります。このA♠を盾にして大きなベットを打ち、相手のワンペアやツーペアを降ろすのが上級者のブラフです！" },
+          { "text": "All-in", "grade": "ok", "showdown": true, "investCost": 89.0, "theoryBonus": 10, "handNetResult": 11.0, "shortExp": "成功しますがリスクも特大です", "outcome": "相手: Fold (J♦ J♠)", "explanation": "A♠ブロックのオールインは有効な戦術ですが、75%〜100%のポットベットでも十分に相手のワンペアは降ろせます。" }
+        ]
+      }
+    ]
+  },
+  {
+    "difficulty": "中級者",
+    "theme": "⑤ 3ベットポットと最悪のリバー",
+    "position": "BTN vs CO",
+    "villainPos": "CO",
+    "preflopInvested": 7.5,
+    "heroHand": "<div class=\"card h\">K♥</div><div class=\"card d\">K♦</div>",
+    "villainHand": "<div class=\"card d\">A♦</div><div class=\"card d\">Q♦</div>",
+    "streets": [
+      {
+        "name": "River",
+        "pot": "45.0",
+        "villainAction": "🔥 All-in (72.5 BB)",
+        "board": "<div class=\"card d\">T♦</div><div class=\"card s\">7♠</div><div class=\"card h\">2♥</div><div class=\"card c\">J♣</div><div class=\"card s\">A♠</div>",
+        "badge": "👑 セカンドペア（Aの出現）",
+        "prompt": "あなたが3ベットし、ターンまで打ち合ってポットは巨大に。リバーで最悪の「A♠」が落ちた瞬間、相手がオールイン！",
+        "options": [
+          { "text": "Fold", "grade": "best", "showdown": true, "investCost": 0, "theoryBonus": 35, "handNetResult": -22.5, "shortExp": "究極のタフフォールド！", "outcome": "相手の手札は A♦ Q♦（トップペア逆転）！致命傷回避！", "explanation": "KKは強力ですが、リバーで落ちたAは、3ベットにコールしてきた相手のレンジ（AQ, AJ, ATなど）に完全にクリーンヒットしています。ここまで投資した22.5BBを捨てるのは非常に辛いですが、ここで降りられるのが真の中級者です。" },
+          { "text": "Call", "grade": "bad", "showdown": true, "investCost": 72.5, "theoryBonus": -30, "handNetResult": -100, "shortExp": "サンクコスト（埋没費用）の罠です", "outcome": "相手の手札は A♦ Q♦ ➔ 100BB全損", "explanation": "「すでにポットが巨大だから」「KKだから」という理由で、状況が悪化しているのにコールしてしまうのは、ポーカーで最もチップを失う負けパターンです。" }
         ]
       }
     ]

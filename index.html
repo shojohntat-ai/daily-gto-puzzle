@@ -10,49 +10,63 @@
 
 <div class="app-container">
 
-  <!-- ▼ 1. ホーム画面（新設：レベル選択・概要・履歴） ▼ -->
+  <!-- ▼ 1. ホーム画面 ▼ -->
   <div id="home-screen" class="screen-layout home-scroll">
-    <div class="home-header">
+    <!-- トップバー（タイトル＆メニュー/ログインボタン） -->
+    <div class="home-topbar">
       <div class="logo-badge">DAILY PUZZLE</div>
-      <h1 class="home-title">♠️ Poker Theory</h1>
-      <p class="home-subtitle">1日3分で「勝てる定石」が身につくポーカーパズル</p>
+      <button class="menu-btn" onclick="toggleMenuModal(true)">👤 ログイン / メニュー</button>
     </div>
 
-    <!-- プレイヤー通算成績（履歴ダッシュボード） -->
-    <div class="stats-dashboard">
-      <div class="stat-box">
-        <div class="stat-value" id="stat-played">0</div>
-        <div class="stat-label">クリア回数</div>
+    <div class="home-header">
+      <h1 class="home-title">♠️ Poker Theory</h1>
+      <p class="home-subtitle">毎日5問！定石（セオリー）で稼ぐポーカーパズル</p>
+    </div>
+
+    <!-- コース別 成績ダッシュボード（インフレ防止のためコース別集計） -->
+    <div class="stats-container">
+      <div class="stats-tabs">
+        <button id="tab-beginner" class="stat-tab active" onclick="switchStatTab('初心者')">🔰 初心者コース成績</button>
+        <button id="tab-intermediate" class="stat-tab" onclick="switchStatTab('中級者')">⚔️ 中級者コース成績</button>
       </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-profit" style="color: #ffd700;">±0 BB</div>
-        <div class="stat-label">通算獲得スコア</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-best-rate">0%</div>
-        <div class="stat-label">最善手率</div>
+      <div class="stats-dashboard">
+        <div class="stat-box">
+          <div class="stat-value" id="stat-played">0日</div>
+          <div class="stat-label">公式クリア日数</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="stat-avg-profit" style="color: #ffd700;">±0 BB</div>
+          <div class="stat-label">平均デイリー収支</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="stat-best-rate">0%</div>
+          <div class="stat-label">最善手率</div>
+        </div>
       </div>
     </div>
 
     <!-- ゲームルール概要 -->
     <div class="about-card">
-      <div class="about-title">💡 遊び方（100 BBスタート）</div>
+      <div class="about-title">💡 ルール（全5問・毎回100BBリセット）</div>
       <ul class="about-list">
-        <li>フロップからリバーまで、状況に応じた<strong>最善の定石</strong>を選択します。</li>
-        <li><strong>🏆 最善手ボーナス (+15 BB〜)</strong> と <strong>💰 ポット収支</strong> の合計でスタックが増減！</li>
-        <li>危険なリバーで<strong>「正しく降りる（ナイスフォールド）」</strong>ことができれば、ボーナスでスタックが増える設計です。</li>
+        <li>各ハンドは<strong>常に100BB持ち</strong>から開始！スタック変動で定石がブレることはありません。</li>
+        <li><strong>🎓 定石ボーナス</strong>と<strong>💰 ハンド決着収支</strong>の合計で「本日の収支」を競います。</li>
+        <li>各コース<strong>1日1回目のプレイが「公式記録」</strong>として成績に保存されます。</li>
       </ul>
     </div>
 
-    <!-- 難易度選択エリア -->
-    <div class="section-label">🎯 挑戦するレベルを選択</div>
+    <!-- 難易度選択エリア（各5問） -->
+    <div class="section-label">🎯 本日のデイリー5問に挑戦</div>
     <div class="level-select-list">
       <button class="level-card" onclick="startGame('初心者')">
         <div class="level-card-left">
           <span class="level-icon">🔰</span>
           <div>
-            <div class="level-name">初心者コース</div>
-            <div class="level-desc">トップペアの価値最大化と基本のベットサイズ</div>
+            <div class="level-name">
+              初心者コース (全5問)
+              <span id="badge-beginner" class="daily-status-badge">未プレイ</span>
+            </div>
+            <div class="level-desc">トップペアの価値最大化・基本のサイズ・ドロー対応</div>
           </div>
         </div>
         <span class="level-arrow">▶</span>
@@ -62,49 +76,53 @@
         <div class="level-card-left">
           <span class="level-icon">⚔️</span>
           <div>
-            <div class="level-name">中級者コース</div>
-            <div class="level-desc">3ベットポット・ウェットボード・タフフォールド</div>
+            <div class="level-name">
+              中級者コース (全5問)
+              <span id="badge-intermediate" class="daily-status-badge">未プレイ</span>
+            </div>
+            <div class="level-desc">3ベットポット・ウェットボード・リバーのタフフォールド</div>
           </div>
         </div>
         <span class="level-arrow">▶</span>
       </button>
 
-      <!-- 未開放レベル -->
-      <button class="level-card locked" onclick="alert('上級者コースは現在開発中です（近日公開予定！）')">
+      <button class="level-card locked" onclick="alert('上級者コース（全5問）は現在開発中です！')">
         <div class="level-card-left">
           <span class="level-icon">🔒</span>
           <div>
-            <div class="level-name">上級者コース <span class="coming-soon">COMING SOON</span></div>
-            <div class="level-desc">ブラフキャッチャー・ポラライズドレンジの攻防</div>
+            <div class="level-name">上級者コース (全5問) <span class="coming-soon">COMING SOON</span></div>
+            <div class="level-desc">ブラフキャッチャー・チェックレイズ・ポラライズ戦略</div>
           </div>
         </div>
       </button>
     </div>
 
     <!-- 最近のプレイ履歴 -->
-    <div class="section-label" style="margin-top: 15px;">📜 最近のプレイ履歴</div>
+    <div class="section-label" style="margin-top: 14px;">📜 最近のプレイ履歴</div>
     <div id="recent-history-list" class="recent-history"></div>
   </div>
   
-  <!-- ▼ 2. ゲーム画面（1画面完結・スタック統合版） ▼ -->
+  <!-- ▼ 2. ゲーム画面（1画面完結・毎回100BBリセット＆本日の収支分離） ▼ -->
   <div id="game-screen" class="screen-layout" style="display: none;">
     <div class="header">
       <button class="back-home-btn" onclick="returnToHome()">✕ 中断</button>
-      <div class="title">♠️ Poker Theory</div>
+      <div class="session-profit-pill" id="session-profit-pill">
+        📊 本日の収支: <span id="session-profit-text">±0</span> BB
+      </div>
       <div class="level-badge" id="difficulty-badge">初心者</div>
     </div>
 
     <!-- ハンドテーマ＆進捗 -->
     <div class="sub-header">
       <span id="hand-theme"></span>
-      <span id="hand-progress" class="progress-pill"></span>
+      <span id="hand-progress" class="progress-pill">Hand 1/5</span>
     </div>
 
-    <!-- 統合インフォバー（ポジション・ポット・自分の持ちスタックに一本化） -->
+    <!-- インフォバー（テーブル上のStackは毎ハンド100BB基準で独立！） -->
     <div class="info-bar">
       <div>📍 <span id="position-text"></span></div>
       <div class="pot-pill">💰 Pot: <span id="pot-text"></span> BB</div>
-      <div class="stack-pill" id="stack-display">🥞 Stack: <span id="stack-text">100</span> BB</div>
+      <div class="stack-pill">🥞 残りStack: <span id="stack-text">97.5</span> BB</div>
     </div>
 
     <!-- テーブルエリア -->
@@ -132,7 +150,7 @@
         <div class="cards-container" id="hero-cards"></div>
         <div class="hero-status">
           <div class="hero-badge" id="hero-badge"></div>
-          <div class="invest-text">ポット投資中: <span id="hero-invested">0</span> BB</div>
+          <div class="invest-text">このハンドの投資: <span id="hero-invested">2.5</span> BB</div>
         </div>
       </div>
     </div>
@@ -159,35 +177,59 @@
 
   <!-- ▼ 3. リザルト＆振り返り画面 ▼ -->
   <div id="result-screen" class="screen-layout result-scroll" style="display: none;">
-    <h2 style="text-align: center; margin: 5px 0;">Challenge 完了！</h2>
+    <div style="text-align: center; margin-top: 4px;">
+      <span id="result-mode-badge" class="logo-badge">🌟 本日の公式記録</span>
+      <h2 style="margin: 4px 0;">5 Hands 完了！</h2>
+    </div>
     
     <div class="result-score-card">
-      <div style="font-size: 0.85em; color: #aaa;">最終スタック (100 BBスタート)</div>
-      <div style="font-size: 1.8em; font-weight: bold; color: #ffd700; margin: 4px 0;">
-        🥞 <span id="final-score">100</span> BB
+      <div style="font-size: 0.82em; color: #aaa;">本日のトータル収支（定石ボーナス＋ポット収支）</div>
+      <div style="font-size: 1.9em; font-weight: 800; margin: 4px 0;" id="final-profit-display">
+        +0 BB
       </div>
-      <div id="score-diff-text" style="font-size: 0.95em; font-weight: bold;"></div>
+      <div id="score-breakdown-text" style="font-size: 0.8em; color: #ccc;"></div>
     </div>
 
-    <!-- Wordle風 絵文字グリッド -->
+    <!-- Wordle風 5問絵文字グリッド -->
     <div class="emoji-grid" id="emoji-grid"></div>
     
-    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-      <button class="next-btn share-btn" style="flex: 2; margin-bottom: 0;" onclick="shareResult()">📋 結果をシェア</button>
+    <div style="display: flex; gap: 8px; margin-bottom: 18px;">
+      <button class="next-btn share-btn" style="flex: 2;" onclick="shareResult()">📋 結果をコピーしてシェア</button>
       <button class="next-btn" style="flex: 1; background-color: #3d4350;" onclick="returnToHome()">🏠 ホームへ</button>
     </div>
 
     <!-- 振り返りリスト（リワード広告モック付き） -->
     <div class="review-section">
-      <h3 style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 12px; font-size: 1em;">👀 今日のプレイを振り返る</h3>
+      <h3 style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 12px; font-size: 0.95em;">👀 全5問のプレイを振り返る</h3>
       <div id="review-list"></div>
     </div>
     
     <!-- プレミアム誘導バナー -->
     <div class="premium-banner">
       <div class="premium-title">📚 定石（セオリー）を体系的に学ぶ</div>
-      <div class="premium-desc">過去100問以上の厳選シチュエーションと、上級者コースをすべて即時開放。</div>
+      <div class="premium-desc">過去100問以上の厳選アーカイブと、上級者コースをすべて即時開放。</div>
       <button class="buy-btn" onclick="alert('決済画面へ遷移 (Stripe連携予定)')">🔒 Season 1 フルパック (¥1,000)</button>
+    </div>
+  </div>
+
+  <!-- ▼ 4. メニュー＆ログインモーダル（将来のバックエンド接続用枠組み） ▼ -->
+  <div id="menu-modal" class="modal-overlay" style="display: none;" onclick="toggleMenuModal(false)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span style="font-weight: bold;">👤 アカウント ＆ メニュー</span>
+        <button class="close-modal-btn" onclick="toggleMenuModal(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="account-box">
+          <div style="font-size: 0.85em; color: #aaa; margin-bottom: 8px;">現在はゲストプレイ中（ブラウザ保存）</div>
+          <button class="auth-btn primary" onclick="alert('将来実装：Google / メールログイン画面へ遷移し、クラウドに成績を同期します。')">🔑 ログイン / 新規登録 (Cloud同期)</button>
+        </div>
+        <div class="menu-links">
+          <button class="menu-item-btn" onclick="alert('将来実装：フレンド機能・デイリーランキング画面')">🏆 デイリーランキング (準備中)</button>
+          <button class="menu-item-btn" onclick="alert('設計仕様書（SPECIFICATION.md）を参照してください。')">📖 定石ボーナスとスコアの仕組み</button>
+          <button class="menu-item-btn danger" onclick="clearLocalData()">🗑️ ローカル履歴データをリセット</button>
+        </div>
+      </div>
     </div>
   </div>
 

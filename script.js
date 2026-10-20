@@ -1,19 +1,23 @@
 // --- 状態管理 ---
 let allHandsData = [];
-let hands = []; // 選択された難易度の問題リスト
+let hands = [];
 let selectedDifficulty = "初心者";
+let currentStatTab = "初心者";
 
 let currentHandIdx = 0;
 let currentStreetIdx = 0;
 let handScores = [];
 let historyData = [];
 
-// 統合されたプレイヤーのスタック（100 BBスタートで増減）
-const INITIAL_STACK = 100;
-let playerStack = INITIAL_STACK;
+// テーブル上のスタック（毎ハンド100BBにリセットされる）
+let tableStack = 100;
 let currentHandInvested = 0;
 
-// --- 初期化（JSON読み込み＆ホーム画面描画） ---
+// 本日の5問セッション収支（定石ボーナス＋ハンド決着収支の累計）
+let sessionProfit = 0;
+let sessionTheoryBonusTotal = 0;
+let sessionPotNetTotal = 0;
+
 async function initApp() {
   try {
     const response = await fetch('questions.json');
@@ -22,32 +26,62 @@ async function initApp() {
     renderHomeStats();
   } catch (error) {
     console.error('問題読み込み失敗:', error);
-    alert("questions.json の読み込みに失敗しました。Live Serverで開いているか確認してください。");
+    alert("questions.json の読み込みに失敗しました。Live Serverで開いてください。");
   }
 }
 
-// ホーム画面の統計・履歴の描画（localStorage連携）
-function renderHomeStats() {
-  const savedHistory = JSON.parse(localStorage.getItem('poker_theory_history') || '[]');
-  
-  const totalPlayed = savedHistory.length;
-  let totalProfit = 0;
-  let bestCount = 0;
-  let totalChoices = 0;
+// 今日の日付キー（YYYY-MM-DD）を取得（1日1回公式記録判定用）
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
-  savedHistory.forEach(record => {
-    totalProfit += record.profit;
-    bestCount += record.bestCount;
-    totalChoices += record.totalChoices;
+// ホーム画面のコース別タブ切り替え
+function switchStatTab(difficulty) {
+  currentStatTab = difficulty;
+  document.getElementById('tab-beginner').classList.toggle('active', difficulty === '初心者');
+  document.getElementById('tab-intermediate').classList.toggle('active', difficulty === '中級者');
+  renderHomeStats();
+}
+
+// ホーム画面の統計・履歴の描画（コース別集計＆デイリー状態表示）
+function renderHomeStats() {
+  const savedHistory = JSON.parse(localStorage.getItem('poker_theory_v2_history') || '[]');
+  const todayKey = getTodayKey();
+
+  // 今日すでに公式プレイ済みかチェックしてバッジ更新
+  const doneBeginner = savedHistory.some(r => r.dateKey === todayKey && r.difficulty === '初心者' && r.isOfficial);
+  const doneInter = savedHistory.some(r => r.dateKey === todayKey && r.difficulty === '中級者' && r.isOfficial);
+
+  const bBadge = document.getElementById('badge-beginner');
+  bBadge.innerText = doneBeginner ? '✅ 本日クリア済 (練習可)' : '🌟 本日未プレイ';
+  bBadge.className = 'daily-status-badge' + (doneBeginner ? ' done' : '');
+
+  const iBadge = document.getElementById('badge-intermediate');
+  iBadge.innerText = doneInter ? '✅ 本日クリア済 (練習可)' : '🌟 本日未プレイ';
+  iBadge.className = 'daily-status-badge' + (doneInter ? ' done' : '');
+
+  // 選択中のタブ（初心者 or 中級者）の「公式記録」のみを集計（周回インフレ防止！）
+  const courseOfficialRecords = savedHistory.filter(r => r.difficulty === currentStatTab && r.isOfficial);
+  const playedDays = courseOfficialRecords.length;
+
+  let sumProfit = 0;
+  let sumBest = 0;
+  let sumChoices = 0;
+
+  courseOfficialRecords.forEach(r => {
+    sumProfit += r.profit;
+    sumBest += r.bestCount;
+    sumChoices += r.totalChoices;
   });
 
-  totalProfit = Math.round(totalProfit * 10) / 10;
-  const bestRate = totalChoices > 0 ? Math.round((bestCount / totalChoices) * 100) : 0;
+  const avgProfit = playedDays > 0 ? Math.round((sumProfit / playedDays) * 10) / 10 : 0;
+  const bestRate = sumChoices > 0 ? Math.round((sumBest / sumChoices) * 100) : 0;
 
-  document.getElementById('stat-played').innerText = `${totalPlayed}回`;
-  const profitEl = document.getElementById('stat-profit');
-  profitEl.innerText = `${totalProfit >= 0 ? '+' : ''}${totalProfit} BB`;
-  profitEl.style.color = totalProfit >= 0 ? '#4caf50' : '#f44336';
+  document.getElementById('stat-played').innerText = `${playedDays}日`;
+  const profitEl = document.getElementById('stat-avg-profit');
+  profitEl.innerText = `${avgProfit >= 0 ? '+' : ''}${avgProfit} BB`;
+  profitEl.style.color = avgProfit >= 0 ? '#4caf50' : '#f44336';
   document.getElementById('stat-best-rate').innerText = `${bestRate}%`;
 
   // 最近の履歴リスト（最新5件）
@@ -55,7 +89,7 @@ function renderHomeStats() {
   historyListEl.innerHTML = '';
 
   if (savedHistory.length === 0) {
-    historyListEl.innerHTML = `<div style="color:#666; font-size:0.8em; text-align:center; padding:12px;">まだプレイ履歴がありません。コースを選んで挑戦しましょう！</div>`;
+    historyListEl.innerHTML = `<div style="color:#666; font-size:0.78em; text-align:center; padding:12px;">まだプレイ履歴がありません。コースを選んで5問に挑戦しましょう！</div>`;
     return;
   }
 
@@ -64,13 +98,15 @@ function renderHomeStats() {
     row.className = 'history-row';
     const diffSign = rec.profit >= 0 ? '+' : '';
     const diffColor = rec.profit >= 0 ? '#4caf50' : '#f44336';
+    const modeTag = rec.isOfficial ? '🌟公式' : '🔄練習';
     row.innerHTML = `
       <div>
-        <strong style="color:#fff;">${rec.difficulty}</strong>
-        <span style="color:#888; font-size:0.85em; margin-left:6px;">${rec.date}</span>
+        <span style="font-size:0.85em; color:#aaa;">${modeTag}</span>
+        <strong style="color:#fff; margin-left:4px;">${rec.difficulty}</strong>
+        <span style="color:#777; font-size:0.85em; margin-left:6px;">${rec.timeStr}</span>
       </div>
       <div>
-        <span style="margin-right:8px;">${rec.emojis}</span>
+        <span style="margin-right:6px; letter-spacing:1px;">${rec.emojis}</span>
         <strong style="color:${diffColor};">${diffSign}${rec.profit} BB</strong>
       </div>
     `;
@@ -78,28 +114,27 @@ function renderHomeStats() {
   });
 }
 
-// コースを選択してゲーム開始
+// コースを選択して5問ゲーム開始
 function startGame(difficulty) {
   selectedDifficulty = difficulty;
-  hands = allHandsData.filter(h => h.difficulty === difficulty);
-  
-  // もし該当難易度の問題がなければ全問題を対象にする（フォールバック）
-  if (hands.length === 0) hands = allHandsData;
+  hands = allHandsData.filter(h => h.difficulty === difficulty).slice(0, 5);
 
   currentHandIdx = 0;
   handScores = [];
   historyData = [];
-  playerStack = INITIAL_STACK; // 100 BBでスタート！
+
+  sessionProfit = 0;
+  sessionTheoryBonusTotal = 0;
+  sessionPotNetTotal = 0;
 
   document.getElementById('home-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
 
-  updateStackUI(0);
+  updateSessionProfitUI(0);
   startHand();
 }
 
-// ホーム画面へ戻る
 function returnToHome() {
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'none';
@@ -107,13 +142,13 @@ function returnToHome() {
   renderHomeStats();
 }
 
-// 各ハンド開始時の初期化
+// ★重要：各ハンド開始時、テーブル上のスタックを必ず規定値（100BB基準）にリセットする
 function startHand() {
   const hand = hands[currentHandIdx];
   currentStreetIdx = 0;
   currentHandInvested = hand.preflopInvested || 2.5;
+  tableStack = Math.round((100 - currentHandInvested) * 10) / 10;
 
-  // プリフロップの参加費をスタックから引く（Hand 1開始時のみ100BBからスタート感を出すため調整可だが、分かりやすくプリフロップ投資済みの状態から開始）
   document.getElementById('villain-cards').innerHTML = `
     <div class="card back"></div>
     <div class="card back"></div>
@@ -121,22 +156,21 @@ function startHand() {
   loadStreet();
 }
 
-// スタック表示の更新＆アニメーション（1つの数字に完全統合！）
-function updateStackUI(change) {
-  const stackSpan = document.getElementById('stack-text');
-  const stackPill = document.getElementById('stack-display');
-  
-  playerStack = Math.round((playerStack + change) * 10) / 10;
-  stackSpan.innerText = playerStack;
+// ヘッダーの「本日の収支」更新アニメーション
+function updateSessionProfitUI(delta) {
+  const textEl = document.getElementById('session-profit-text');
+  const pillEl = document.getElementById('session-profit-pill');
 
-  if (change !== 0) {
-    stackPill.classList.remove('increase', 'decrease');
-    void stackPill.offsetWidth;
-    stackPill.classList.add(change > 0 ? 'increase' : 'decrease');
+  sessionProfit = Math.round((sessionProfit + delta) * 10) / 10;
+  textEl.innerText = `${sessionProfit >= 0 ? '+' : ''}${sessionProfit}`;
+
+  if (delta !== 0) {
+    pillEl.classList.remove('increase', 'decrease');
+    void pillEl.offsetWidth;
+    pillEl.classList.add(delta > 0 ? 'increase' : 'decrease');
   }
 }
 
-// ストリート画面の描画
 function loadStreet() {
   const hand = hands[currentHandIdx];
   const street = hand.streets[currentStreetIdx];
@@ -149,8 +183,8 @@ function loadStreet() {
   document.getElementById('villain-action').innerText = street.villainAction || "Check";
 
   document.getElementById('pot-text').innerText = street.pot;
-  document.getElementById('stack-text').innerText = playerStack;
-  document.getElementById('hero-invested').innerText = Math.round(currentHandInvested * 10) / 10;
+  document.getElementById('stack-text').innerText = tableStack;
+  document.getElementById('hero-invested').innerText = currentHandInvested;
 
   document.getElementById('street-label').innerText = street.name.toUpperCase();
   document.getElementById('board-cards').innerHTML = street.board;
@@ -158,7 +192,6 @@ function loadStreet() {
   document.getElementById('hero-badge').innerText = street.badge || "";
   document.getElementById('question-prompt').innerText = street.prompt;
 
-  // 選択肢パネルを表示
   document.getElementById('choice-state').style.display = 'flex';
   document.getElementById('feedback-state').style.display = 'none';
 
@@ -174,13 +207,12 @@ function loadStreet() {
   });
 }
 
-// 選択肢を選んだ時の処理
 function handleChoice(selectedOpt, allOptions) {
   const hand = hands[currentHandIdx];
   const street = hand.streets[currentStreetIdx];
   const isFinalStreet = (currentStreetIdx === hand.streets.length - 1);
 
-  // 1. 履歴記録
+  // 1. スコア記号記録
   if (!handScores[currentHandIdx]) handScores[currentHandIdx] = [];
   handScores[currentHandIdx].push(selectedOpt.grade === 'best' ? '🟩' : (selectedOpt.grade === 'ok' ? '🟨' : '🟥'));
 
@@ -198,29 +230,26 @@ function handleChoice(selectedOpt, allOptions) {
     vCards.querySelectorAll('.card').forEach(c => c.classList.add('reveal'));
   }
 
-  // 3. スタック増減計算（投資・決着・セオリーボーナスをすべてStackに統合）
+  // 3. テーブル上のリアルな投資進行（毎回100BB基準のStackから減らす）
   const bestOpt = allOptions.find(o => o.grade === 'best') || allOptions[0];
-  const costToContinue = bestOpt.investCost || 0;
-  currentHandInvested += costToContinue;
-  document.getElementById('hero-invested').innerText = Math.round(currentHandInvested * 10) / 10;
+  const costToContinue = isFinalStreet ? (selectedOpt.investCost || 0) : (bestOpt.investCost || 0);
+  tableStack = Math.round((tableStack - costToContinue) * 10) / 10;
+  currentHandInvested = Math.round((currentHandInvested + costToContinue) * 10) / 10;
+  document.getElementById('stack-text').innerText = tableStack;
+  document.getElementById('hero-invested').innerText = currentHandInvested;
 
-  // セオリーボーナス
+  // 4. スコア計算（定石ボーナス ＋ ハンド決着時のポット収支 ➔ 本日の収支へ加算）
   const theoryBonus = selectedOpt.theoryBonus !== undefined ? selectedOpt.theoryBonus : 
                       (selectedOpt.grade === 'best' ? 15 : (selectedOpt.grade === 'ok' ? 0 : -15));
+  const handNetResult = isFinalStreet ? (selectedOpt.handNetResult || 0) : 0;
 
-  // ハンド決着時のポット収支（最終ストリートのみ発生）
-  const handNetResult = selectedOpt.handNetResult || 0;
+  sessionTheoryBonusTotal = Math.round((sessionTheoryBonusTotal + theoryBonus) * 10) / 10;
+  sessionPotNetTotal = Math.round((sessionPotNetTotal + handNetResult) * 10) / 10;
 
-  // 今回のアクションによるスタック変動（道中は ボーナス - 投資額、最終局面は ボーナス + 最終ポット収支）
-  let stackDelta = 0;
-  if (!isFinalStreet) {
-    stackDelta = theoryBonus - costToContinue;
-  } else {
-    stackDelta = theoryBonus + handNetResult;
-  }
-  updateStackUI(stackDelta);
+  const totalDelta = Math.round((theoryBonus + handNetResult) * 10) / 10;
+  updateSessionProfitUI(totalDelta);
 
-  // 4. フィードバック画面へスワップ
+  // 5. フィードバック画面へスワップ
   document.getElementById('choice-state').style.display = 'none';
   document.getElementById('feedback-state').style.display = 'flex';
 
@@ -229,28 +258,26 @@ function handleChoice(selectedOpt, allOptions) {
 
   resultDiv.className = 'feedback-grade';
   if (selectedOpt.grade === 'best') {
-    resultDiv.innerText = `🏆 最善手！ (${stackDelta >= 0 ? '+' : ''}${Math.round(stackDelta*10)/10} BB)`;
+    resultDiv.innerText = `🏆 最善手！ (定石 +${theoryBonus} BB)`;
     resultDiv.classList.add('correct');
   } else if (selectedOpt.grade === 'ok') {
-    resultDiv.innerText = `⚠️ 妥協手 (${stackDelta >= 0 ? '+' : ''}${Math.round(stackDelta*10)/10} BB)`;
+    resultDiv.innerText = `⚠️ 妥協手 (定石 ${theoryBonus >= 0 ? '+' : ''}${theoryBonus} BB)`;
     resultDiv.classList.add('ok');
   } else {
-    resultDiv.innerText = `❌ 悪手 (${stackDelta >= 0 ? '+' : ''}${Math.round(stackDelta*10)/10} BB)`;
+    resultDiv.innerText = `❌ 悪手 (定石 ${theoryBonus} BB)`;
     resultDiv.classList.add('wrong');
   }
 
   let msg = `▶ 展開: ${selectedOpt.outcome}\n`;
-  msg += `🎓 定石ボーナス: ${theoryBonus >= 0 ? '+' : ''}${theoryBonus} BB （${selectedOpt.shortExp}）\n`;
-
   if (!isFinalStreet && costToContinue > 0) {
-    msg += `🪙 ポットへ投資: -${costToContinue} BB\n`;
-  } else if (isFinalStreet && handNetResult !== 0) {
-    msg += `💰 ポット決着収支: ${handNetResult > 0 ? '+' : ''}${handNetResult} BB\n`;
+    msg += `🪙 テーブル投資: ${costToContinue} BB (残りStack: ${tableStack} BB)\n`;
+  } else if (isFinalStreet) {
+    msg += `💰 ハンド決着収支: ${handNetResult >= 0 ? '+' : ''}${handNetResult} BB | 🎓 定石評価: ${theoryBonus >= 0 ? '+' : ''}${theoryBonus} BB\n`;
   }
 
   if (selectedOpt.grade !== 'best') {
     msg += `\n💡 指南: ${selectedOpt.explanation}`;
-    if (!isFinalStreet) msg += `\n※次は定石の「${bestOpt.text}」ルートで進行します。`;
+    if (!isFinalStreet) msg += `\n※次は定石の「${bestOpt.text}」ルートでターン以降へ進みます。`;
   } else {
     msg += `\n💡 定石メモ: ${selectedOpt.explanation}`;
   }
@@ -263,10 +290,10 @@ function handleChoice(selectedOpt, allOptions) {
     nextBtn.innerText = `▶ ${hand.streets[currentStreetIdx + 1].name} へ進む`;
   } else if (currentHandIdx < hands.length - 1) {
     nextBtn.className = "next-btn hand-btn";
-    nextBtn.innerText = `⏭ 次のハンドへ (Hand ${currentHandIdx + 2}/${hands.length})`;
+    nextBtn.innerText = `⏭ 次のハンドへ (100BBにリセットして Hand ${currentHandIdx + 2}/${hands.length} へ)`;
   } else {
     nextBtn.className = "next-btn hand-btn";
-    nextBtn.innerText = `🏁 最終結果を見る`;
+    nextBtn.innerText = `🏁 全5問完了！結果を見る`;
   }
 }
 
@@ -285,50 +312,60 @@ function nextStep() {
   }
 }
 
-// リザルト表示＆履歴の保存
 function showResult() {
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'flex';
-  document.getElementById('final-score').innerText = playerStack;
 
-  const diff = Math.round((playerStack - INITIAL_STACK) * 10) / 10;
-  const diffEl = document.getElementById('score-diff-text');
-  diffEl.innerText = `トータル収支: ${diff >= 0 ? '+' : ''}${diff} BB`;
-  diffEl.style.color = diff >= 0 ? '#4caf50' : '#f44336';
+  const finalEl = document.getElementById('final-profit-display');
+  finalEl.innerText = `${sessionProfit >= 0 ? '+' : ''}${sessionProfit} BB`;
+  finalEl.style.color = sessionProfit >= 0 ? '#4caf50' : '#f44336';
+
+  document.getElementById('score-breakdown-text').innerText = 
+    `内訳: 🎓定石評価 ${sessionTheoryBonusTotal >= 0 ? '+' : ''}${sessionTheoryBonusTotal} BB / 💰実戦ポット収支 ${sessionPotNetTotal >= 0 ? '+' : ''}${sessionPotNetTotal} BB`;
 
   let gridHtml = "";
-  let flatEmojis = "";
+  let compactEmojis = "";
   hands.forEach((hand, idx) => {
     if (handScores[idx]) {
       const line = handScores[idx].join('');
-      gridHtml += `Hand ${idx + 1}: ${line}<br>`;
-      flatEmojis += line + " ";
+      gridHtml += `Hand ${idx + 1}: ${line} <span style="font-size:0.8em; color:#888;">(${hand.theme})</span><br>`;
+      compactEmojis += line + "/";
     }
   });
   document.getElementById('emoji-grid').innerHTML = gridHtml;
 
-  // 履歴をlocalStorageに保存
-  savePlayHistory(diff, flatEmojis.trim());
+  const isOfficial = savePlayHistory(sessionProfit, compactEmojis.slice(0, -1));
+  const modeBadge = document.getElementById('result-mode-badge');
+  modeBadge.innerText = isOfficial ? '🌟 本日の公式記録（統計に反映）' : '🔄 練習プレイ（本日の公式記録は保存済）';
 
   renderReviewList();
 }
 
 function savePlayHistory(profit, emojis) {
-  const savedHistory = JSON.parse(localStorage.getItem('poker_theory_history') || '[]');
+  const savedHistory = JSON.parse(localStorage.getItem('poker_theory_v2_history') || '[]');
+  const todayKey = getTodayKey();
+
+  // 今日この難易度をまだ公式クリアしていなければ isOfficial = true
+  const alreadyPlayedToday = savedHistory.some(r => r.dateKey === todayKey && r.difficulty === selectedDifficulty && r.isOfficial);
+  const isOfficial = !alreadyPlayedToday;
+
   const bestCount = historyData.filter(d => d.selectedOpt.grade === 'best').length;
-  const today = new Date();
-  const dateStr = `${today.getMonth() + 1}/${today.getDate()} ${today.getHours()}:${String(today.getMinutes()).padStart(2, '0')}`;
+  const now = new Date();
+  const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   savedHistory.push({
+    dateKey: todayKey,
+    timeStr: timeStr,
     difficulty: selectedDifficulty,
     profit: profit,
     emojis: emojis,
     bestCount: bestCount,
     totalChoices: historyData.length,
-    date: dateStr
+    isOfficial: isOfficial
   });
 
-  localStorage.setItem('poker_theory_history', JSON.stringify(savedHistory));
+  localStorage.setItem('poker_theory_v2_history', JSON.stringify(savedHistory));
+  return isOfficial;
 }
 
 function renderReviewList() {
@@ -339,7 +376,7 @@ function renderReviewList() {
   adBlock.id = 'ad-block';
   adBlock.style.cssText = 'background:#1c1f26; border:1px dashed #444; padding:16px; text-align:center; border-radius:8px; margin-bottom:15px;';
   adBlock.innerHTML = `
-    <p style="color:#ccc; font-size:0.85em; margin:0 0 12px 0;">全ストリートの詳しい定石解説を見るには動画広告を視聴してください。</p>
+    <p style="color:#ccc; font-size:0.85em; margin:0 0 12px 0;">全5問の詳しい定石解説を見るには動画広告を視聴してください。</p>
     <button style="background:#2196f3; color:white; border:none; padding:11px 16px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;" onclick="playAd()">▶ 動画広告を見て解説をアンロック</button>
   `;
   reviewList.appendChild(adBlock);
@@ -355,12 +392,11 @@ function renderReviewList() {
     const header = document.createElement('div');
     header.className = 'review-header';
     let icon = data.selectedOpt.grade === 'best' ? '✅ 最善手' : (data.selectedOpt.grade === 'ok' ? '⚠️ 妥協手' : '❌ 悪手');
-    header.innerHTML = `<span>Hand ${data.handIdx + 1} - ${data.streetName}</span> <span>${icon} ▼</span>`;
+    header.innerHTML = `<span>Hand ${data.handIdx + 1} (${data.streetName}) - ${data.theme}</span> <span>${icon} ▼</span>`;
 
     const body = document.createElement('div');
     body.className = 'review-body';
     body.innerHTML = `
-      <div style="font-size:0.8em; color:#64b5f6; margin-bottom:4px;">${data.theme}</div>
       <div style="font-size:0.85em; color:#fff; margin-bottom:8px;">あなたの選択: <strong>${data.selectedOpt.text}</strong></div>
       <div style="font-size:0.82em; color:#ccc; line-height:1.5; background:#14161b; padding:10px; border-radius:6px;">
         ${data.selectedOpt.explanation}
@@ -370,7 +406,7 @@ function renderReviewList() {
     header.onclick = () => {
       const isVisible = body.style.display === 'block';
       body.style.display = isVisible ? 'none' : 'block';
-      header.innerHTML = `<span>Hand ${data.handIdx + 1} - ${data.streetName}</span> <span>${icon} ${isVisible ? '▼' : '▲'}</span>`;
+      header.innerHTML = `<span>Hand ${data.handIdx + 1} (${data.streetName}) - ${data.theme}</span> <span>${icon} ${isVisible ? '▼' : '▲'}</span>`;
     };
 
     item.appendChild(header);
@@ -382,19 +418,31 @@ function renderReviewList() {
 }
 
 function playAd() {
-  alert("（15秒の動画広告再生完了）\n本日のすべての定石解説がアンロックされました！");
+  alert("（15秒の動画広告再生完了）\n全5問の定石解説がアンロックされました！");
   document.getElementById('ad-block').style.display = 'none';
   document.getElementById('history-container').style.display = 'block';
 }
 
 function shareResult() {
-  const diff = Math.round((playerStack - INITIAL_STACK) * 10) / 10;
-  let shareText = `♠️ Daily Poker Theory [${selectedDifficulty}]\n最終スタック: ${playerStack} BB (${diff >= 0 ? '+' : ''}${diff} BB)\n\n`;
+  let shareText = `♠️ Daily Poker Theory [${selectedDifficulty} 5問]\n本日の収支: ${sessionProfit >= 0 ? '+' : ''}${sessionProfit} BB (定石:${sessionTheoryBonusTotal >= 0 ? '+' : ''}${sessionTheoryBonusTotal} / 実戦:${sessionPotNetTotal >= 0 ? '+' : ''}${sessionPotNetTotal})\n\n`;
   hands.forEach((hand, idx) => {
     if (handScores[idx]) shareText += `Hand ${idx + 1}: ${handScores[idx].join('')}\n`;
   });
   shareText += `#PokerTheory #ポーカーパズル`;
-  navigator.clipboard.writeText(shareText).then(() => alert("結果をコピーしました！友達にシェアしよう！"));
+  navigator.clipboard.writeText(shareText).then(() => alert("結果をコピーしました！友達とスコアを競おう！"));
+}
+
+// メニューモーダル制御
+function toggleMenuModal(show) {
+  document.getElementById('menu-modal').style.display = show ? 'flex' : 'none';
+}
+
+function clearLocalData() {
+  if (confirm("ローカルに保存されている成績・履歴データをすべてリセットしますか？")) {
+    localStorage.removeItem('poker_theory_v2_history');
+    toggleMenuModal(false);
+    renderHomeStats();
+  }
 }
 
 initApp();
