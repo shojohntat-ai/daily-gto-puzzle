@@ -36,29 +36,59 @@ let sessionProfit = 0;
 let sessionTheoryBonusTotal = 0;
 let sessionPotNetTotal = 0;
 
-// --- アプリ初期化（クラウドからデータを取得） ---
+// --- アプリ初期化（問題データ＆履歴をSupabaseから取得） ---
 async function initApp() {
   try {
-    // 1. 問題データの読み込み
-    const response = await fetch('questions.json');
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    allHandsData = await response.json();
+    const todayKey = getTodayKey();
+
+    // 1. Supabaseから「今日の日付」の問題を取得（hand_order昇順）
+    let { data: questionData, error: qError } = await supabaseClient
+      .from('daily_questions')
+      .select('*')
+      .eq('publish_date', todayKey)
+      .order('hand_order', { ascending: true });
+
+    if (qError) throw qError;
+
+    // ※もし今日の日付の問題がまだ登録されていない場合の安全策（フォールバック）
+    // 最新の日付の問題を取得して遊べるようにする
+    if (!questionData || questionData.length === 0) {
+      console.warn("本日の問題が見つからないため、登録されている全問題から読み込みます。");
+      const { data: fallbackData } = await supabaseClient
+        .from('daily_questions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      questionData = fallbackData || [];
+    }
+
+    // SupabaseのDBカラム名（スネークケース）をアプリのプロパティ名にマッピング
+    allHandsData = questionData.map(q => ({
+      difficulty: q.difficulty,
+      theme: q.theme,
+      position: q.position,
+      villainPos: q.villain_pos,
+      preflopInvested: Number(q.preflop_invested),
+      heroHand: q.hero_hand,
+      villainHand: q.villain_hand,
+      streets: q.streets
+    }));
 
     // 2. Supabaseから自分の過去のプレイ履歴をすべて取得
-    const { data, error } = await supabaseClient
+    const { data: historyDataFromCloud, error: hError } = await supabaseClient
       .from('daily_records')
       .select('*')
       .eq('user_id', currentUserId)
-      .order('created_at', { ascending: true }); // 古い順
+      .order('created_at', { ascending: true });
 
-    if (error) throw error;
-    cloudHistory = data || []; // 取得した履歴を格納
-    
+    if (hError) throw hError;
+    cloudHistory = historyDataFromCloud || [];
+
     // ホーム画面の統計を描画
     renderHomeStats();
   } catch (error) {
     console.error('初期化エラー:', error);
-    alert("データの読み込みに失敗しました。Live Serverで開いているか確認してください。");
+    alert("データの読み込みに失敗しました。通信環境やLive Serverを確認してください。");
   }
 }
 
@@ -235,7 +265,9 @@ function handleChoice(selectedOpt, allOptions) {
   const hand = hands[currentHandIdx];
   const street = hand.streets[currentStreetIdx];
   const isFinalStreet = (currentStreetIdx === hand.streets.length - 1);
+  const bestOpt = allOptions.find(o => o.grade === 'best') || allOptions[0];
 
+  // 1. スコア記号記録
   if (!handScores[currentHandIdx]) handScores[currentHandIdx] = [];
   handScores[currentHandIdx].push(selectedOpt.grade === 'best' ? '🟩' : (selectedOpt.grade === 'ok' ? '🟨' : '🟥'));
 
@@ -243,22 +275,25 @@ function handleChoice(selectedOpt, allOptions) {
     handIdx: currentHandIdx,
     theme: hand.theme,
     streetName: street.name,
-    selectedOpt: selectedOpt
+    selectedOpt: selectedOpt,
+    bestOpt: bestOpt
   });
 
+  // 2. ショーダウン演出
   if (selectedOpt.showdown || isFinalStreet) {
     const vCards = document.getElementById('villain-cards');
     vCards.innerHTML = hand.villainHand;
     vCards.querySelectorAll('.card').forEach(c => c.classList.add('reveal'));
   }
 
-  const bestOpt = allOptions.find(o => o.grade === 'best') || allOptions[0];
+  // 3. テーブル投資処理（定石の投資額で次へ進む）
   const costToContinue = isFinalStreet ? (selectedOpt.investCost || 0) : (bestOpt.investCost || 0);
   tableStack = Math.round((tableStack - costToContinue) * 10) / 10;
   currentHandInvested = Math.round((currentHandInvested + costToContinue) * 10) / 10;
   document.getElementById('stack-text').innerText = tableStack;
   document.getElementById('hero-invested').innerText = currentHandInvested;
 
+  // 4. スコア計算
   const theoryBonus = selectedOpt.theoryBonus !== undefined ? selectedOpt.theoryBonus : 
                       (selectedOpt.grade === 'best' ? 15 : (selectedOpt.grade === 'ok' ? 0 : -15));
   const handNetResult = isFinalStreet ? (selectedOpt.handNetResult || 0) : 0;
@@ -269,50 +304,69 @@ function handleChoice(selectedOpt, allOptions) {
   const totalDelta = Math.round((theoryBonus + handNetResult) * 10) / 10;
   updateSessionProfitUI(totalDelta);
 
+  // 5. フィードバック画面へスワップ表示
   document.getElementById('choice-state').style.display = 'none';
   document.getElementById('feedback-state').style.display = 'flex';
 
   const resultDiv = document.getElementById('feedback-result');
-  document.getElementById('selected-action-tag').innerText = `選択: ${selectedOpt.text}`;
-
+  const comparisonDiv = document.getElementById('action-comparison');
+  
   resultDiv.className = 'feedback-grade';
+  
   if (selectedOpt.grade === 'best') {
-    resultDiv.innerText = `🏆 最善手！ (定石 +${theoryBonus} BB)`;
+    resultDiv.innerText = `🏆 正解！ 最善手`;
     resultDiv.classList.add('correct');
-  } else if (selectedOpt.grade === 'ok') {
-    resultDiv.innerText = `⚠️ 妥協手 (定石 ${theoryBonus >= 0 ? '+' : ''}${theoryBonus} BB)`;
-    resultDiv.classList.add('ok');
+    comparisonDiv.innerHTML = `<span class="action-tag best">あなたの選択: ${selectedOpt.text}</span>`;
   } else {
-    resultDiv.innerText = `❌ 悪手 (定石 ${theoryBonus} BB)`;
-    resultDiv.classList.add('wrong');
+    resultDiv.innerText = selectedOpt.grade === 'ok' ? `⚠️ 妥協手` : `❌ 不正解（ミス）`;
+    resultDiv.classList.add(selectedOpt.grade === 'ok' ? 'ok' : 'wrong');
+    // あなたの選択と正解を並べて表示
+    comparisonDiv.innerHTML = `
+      <span class="action-tag user">あなた: ${selectedOpt.text}</span>
+      <span class="action-tag best">正解: ${bestOpt.text}</span>
+    `;
   }
 
-  let msg = `▶ 展開: ${selectedOpt.outcome}\n`;
-  if (!isFinalStreet && costToContinue > 0) {
-    msg += `🪙 テーブル投資: ${costToContinue} BB (残りStack: ${tableStack} BB)\n`;
-  } else if (isFinalStreet) {
-    msg += `💰 ハンド決着収支: ${handNetResult >= 0 ? '+' : ''}${handNetResult} BB | 🎓 定石評価: ${theoryBonus >= 0 ? '+' : ''}${theoryBonus} BB\n`;
-  }
+  // 分かりやすい2段構成の解説文をHTMLで構築
+// 分かりやすい2段構成の解説文をHTMLで構築（余計な改行スペースを排除）
+  let htmlMsg = `<div style="margin-bottom: 10px; color: #aaa; font-size: 0.88em; font-weight: bold;">▶ 展開: ${selectedOpt.outcome}</div>`;
 
-  if (selectedOpt.grade !== 'best') {
-    msg += `\n💡 指南: ${selectedOpt.explanation}`;
-    if (!isFinalStreet) msg += `\n※次は定石の「${bestOpt.text}」ルートでターン以降へ進みます。`;
+  if (selectedOpt.grade === 'best') {
+    htmlMsg += `
+      <div class="feedback-box-section">
+        <div class="feedback-box-title best-title">💡 定石の理由 (+${theoryBonus} BB)</div>
+        <div class="feedback-box-desc">${selectedOpt.explanation}</div>
+      </div>
+    `;
   } else {
-    msg += `\n💡 定石メモ: ${selectedOpt.explanation}`;
+    htmlMsg += `
+      <div class="feedback-box-section">
+        <div class="feedback-box-title wrong-title">❌ なぜ「${selectedOpt.text}」はダメなのか？</div>
+        <div class="feedback-box-desc">${selectedOpt.explanation}</div>
+      </div>
+      <div class="feedback-box-section" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 8px;">
+        <div class="feedback-box-title best-title">🏆 正解は「${bestOpt.text}」</div>
+        <div class="feedback-box-desc">${bestOpt.explanation}</div>
+      </div>
+    `;
+    if (!isFinalStreet) {
+      htmlMsg += `<div style="margin-top: 8px; font-size: 0.82em; color: #888;">※正解の「${bestOpt.text}」を選んだ前提で次のストリートへ進みます。</div>`;
+    }
   }
 
-  document.getElementById('system-message').innerText = msg;
+  document.getElementById('system-message').innerHTML = htmlMsg;
 
+  // 次へ進むボタン
   const nextBtn = document.getElementById('next-btn');
   if (!isFinalStreet) {
     nextBtn.className = "next-btn";
     nextBtn.innerText = `▶ ${hand.streets[currentStreetIdx + 1].name} へ進む`;
   } else if (currentHandIdx < hands.length - 1) {
     nextBtn.className = "next-btn hand-btn";
-    nextBtn.innerText = `⏭ 次のハンドへ (100BBにリセットして Hand ${currentHandIdx + 2}/${hands.length} へ)`;
+    nextBtn.innerText = `⏭ 次のハンドへ (Hand ${currentHandIdx + 2}/${hands.length})`;
   } else {
     nextBtn.className = "next-btn hand-btn";
-    nextBtn.innerText = `🏁 全5問完了！結果を見る`;
+    nextBtn.innerText = `🏁 全ハンド完了！結果を見る`;
   }
 }
 

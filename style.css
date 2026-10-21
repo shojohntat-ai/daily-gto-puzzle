@@ -352,15 +352,16 @@ body {
 .feedback-grade.wrong { color: var(--incorrect); }
 .selected-action-tag { font-size: 0.75em; background: #2c313c; padding: 3px 8px; border-radius: 4px; color: #ccc; }
 
+/* フィードバックメッセージボックスの文字サイズと余白調整 */
 .system-message {
   background-color: var(--panel-bg);
   border-left: 4px solid var(--primary);
-  padding: 9px 11px;
+  padding: 12px 14px;
   border-radius: 6px;
-  font-size: 0.8em;
-  line-height: 1.42;
-  white-space: pre-line;
-  margin-bottom: 8px;
+  font-size: 0.95em; /* 0.8emから大幅に拡大（約15pxでクッキリ読める） */
+  line-height: 1.5;
+  white-space: normal; /* 不要な空行・改行の暴走を防ぐ */
+  margin-bottom: 10px;
   flex-grow: 1;
   overflow-y: auto;
 }
@@ -448,3 +449,38 @@ body {
 .menu-item-btn.danger { color: #ef5350; border-color: rgba(244,67,54,0.3); }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* アクション対比タグ */
+.action-comparison {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.action-tag {
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.action-tag.user { background: #333; color: #aaa; }
+.action-tag.best { background: rgba(76, 175, 80, 0.2); color: #81c784; border: 1px solid #4caf50; }
+
+/* 各セクションの余白を適切に詰める */
+.feedback-box-section {
+  margin-bottom: 10px;
+}
+.feedback-box-title {
+  font-weight: bold;
+  font-size: 1.05em; /* 見出しを強調 */
+  margin-bottom: 4px;
+}
+.feedback-box-title.wrong-title { color: #ff5252; }
+.feedback-box-title.best-title { color: #81c784; }
+
+.feedback-box-desc {
+  color: #e0e0e0;
+  font-size: 0.95em; /* 本文も読みやすいサイズに */
+  line-height: 1.5;
+  padding-left: 2px;
+}
