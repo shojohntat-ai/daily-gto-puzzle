@@ -225,6 +225,12 @@ function updateSessionProfitUI(delta) {
   }
 }
 
+// カードHTML内の余計なバックスラッシュを除去して安全に描画
+function sanitizeCardHtml(htmlStr) {
+  if (!htmlStr) return "";
+  return htmlStr.replace(/\\/g, ''); // すべてのバックスラッシュを消去
+}
+
 function loadStreet() {
   const hand = hands[currentHandIdx];
   const street = hand.streets[currentStreetIdx];
@@ -241,8 +247,8 @@ function loadStreet() {
   document.getElementById('hero-invested').innerText = currentHandInvested;
 
   document.getElementById('street-label').innerText = street.name.toUpperCase();
-  document.getElementById('board-cards').innerHTML = street.board;
-  document.getElementById('hero-cards').innerHTML = hand.heroHand;
+  document.getElementById('board-cards').innerHTML = sanitizeCardHtml(street.board);
+  document.getElementById('hero-cards').innerHTML = sanitizeCardHtml(hand.heroHand);
   document.getElementById('hero-badge').innerText = street.badge || "";
   document.getElementById('question-prompt').innerText = street.prompt;
 
@@ -282,7 +288,7 @@ function handleChoice(selectedOpt, allOptions) {
   // 2. ショーダウン演出
   if (selectedOpt.showdown || isFinalStreet) {
     const vCards = document.getElementById('villain-cards');
-    vCards.innerHTML = hand.villainHand;
+    vCards.innerHTML = sanitizeCardHtml(hand.villainHand);
     vCards.querySelectorAll('.card').forEach(c => c.classList.add('reveal'));
   }
 

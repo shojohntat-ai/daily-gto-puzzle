@@ -281,6 +281,7 @@ body {
   font-size: 1.15em;
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  color: #212121; /* デフォルトを白ではなく濃い黒に指定 */
 }
 .cards-container.mini .card { width: 32px; height: 44px; font-size: 0.95em; }
 .card.back {
@@ -289,10 +290,11 @@ body {
   color: transparent;
 }
 .card.reveal { animation: flipCard 0.5s ease forwards; }
-.card.s { color: #212121; }
-.card.h { color: #d32f2f; }
-.card.d { color: #1976d2; }
-.card.c { color: #2e7d32; }
+/* クラス名が正しく当たっている時のスート色 */
+.card.s { color: #212121 !important; } /* スペード: 黒 */
+.card.h { color: #d32f2f !important; } /* ハート: 赤 */
+.card.d { color: #1976d2 !important; } /* ダイヤ: 青 */
+.card.c { color: #2e7d32 !important; } /* クラブ: 緑 */
 
 @keyframes flipCard {
   0% { transform: rotateY(90deg) scale(1.1); }
