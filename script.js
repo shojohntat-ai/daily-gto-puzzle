@@ -189,7 +189,9 @@ function startGame(difficulty) {
     return;
   }
 
-  // 中断セーブがあるか確認
+  let restoreFeedback = false;
+  let savedOpt = null;
+
   const saved = localStorage.getItem(getSaveKey(difficulty));
   if (saved) {
     try {
@@ -203,6 +205,10 @@ function startGame(difficulty) {
       sessionPotNetTotal = p.sessionPotNetTotal || 0;
       tableStack = p.tableStack !== undefined ? p.tableStack : 100;
       currentHandInvested = p.currentHandInvested || 0;
+      
+      // 解説画面を見ていたかチェック
+      restoreFeedback = !!p.isInFeedback;
+      savedOpt = p.lastSelectedOpt;
     } catch (e) {
       console.error("セーブデータ読み込み失敗、初期化します", e);
       resetNewGame();
@@ -216,14 +222,97 @@ function startGame(difficulty) {
   document.getElementById('game-screen').style.display = 'flex';
 
   updateSessionProfitUI(0);
-  
-  // 復帰時：手札や相手カードを正しく描画
-  const hand = hands[currentHandIdx];
-  document.getElementById('villain-cards').innerHTML = `
-    <div class="card back"></div>
-    <div class="card back"></div>
-  `;
+
+  // 盤面描画
   loadStreet();
+
+  // もし直前に回答して解説を見ていた場合は、強制的に解説画面を復元する
+  if (restoreFeedback && savedOpt) {
+    const hand = hands[currentHandIdx];
+    const street = hand.streets[currentStreetIdx];
+    restoreFeedbackUI(hand, street, savedOpt);
+  }
+}
+
+// 復帰時に解説画面（フィードバック）を再構築する関数
+function restoreFeedbackUI(hand, street, selectedOpt) {
+  const isFinalStreet = (currentStreetIdx === hand.streets.length - 1);
+  const bestOpt = street.options.find(o => o.grade === 'best') || street.options[0];
+
+  // ショーダウン演出（最終ストリートの場合）
+  if (selectedOpt.showdown || isFinalStreet) {
+    const vCards = document.getElementById('villain-cards');
+    vCards.innerHTML = sanitizeCardHtml(hand.villainHand);
+    vCards.querySelectorAll('.card').forEach(c => c.classList.add('reveal'));
+  }
+
+  // 選択肢を隠してフィードバックを表示
+  document.getElementById('choice-state').style.display = 'none';
+  document.getElementById('feedback-state').style.display = 'flex';
+
+  const resultDiv = document.getElementById('feedback-result');
+  const comparisonDiv = document.getElementById('action-comparison');
+  
+  resultDiv.className = 'feedback-grade';
+  if (selectedOpt.grade === 'best') {
+    resultDiv.innerText = `🏆 正解！ 最善手`;
+    resultDiv.classList.add('correct');
+    comparisonDiv.innerHTML = `<span class="action-tag best">あなたの選択: ${selectedOpt.text}</span>`;
+  } else {
+    resultDiv.innerText = selectedOpt.grade === 'ok' ? `⚠️ 妥協手` : `❌ 不正解（ミス）`;
+    resultDiv.classList.add(selectedOpt.grade === 'ok' ? 'ok' : 'wrong');
+    comparisonDiv.innerHTML = `
+      <span class="action-tag user">あなた: ${selectedOpt.text}</span>
+      <span class="action-tag best">正解: ${bestOpt.text}</span>
+    `;
+  }
+
+  let htmlMsg = "";
+  if (isFinalStreet) {
+    htmlMsg += `<div style="margin-bottom: 10px; font-size: 1.05em; font-weight: bold; color: #64b5f6;">💡 今回のテーマ: ${hand.theme}</div>`;
+  }
+  htmlMsg += `<div style="margin-bottom: 10px; color: #aaa; font-size: 0.88em; font-weight: bold;">▶ 展開: ${selectedOpt.outcome}</div>`;
+
+  const theoryBonus = selectedOpt.theoryBonus !== undefined ? selectedOpt.theoryBonus : 
+                      (selectedOpt.grade === 'best' ? 15 : (selectedOpt.grade === 'ok' ? 0 : -15));
+
+  if (selectedOpt.grade === 'best') {
+    htmlMsg += `
+      <div class="feedback-box-section">
+        <div class="feedback-box-title best-title">💡 定石の理由 (+${theoryBonus} BB)</div>
+        <div class="feedback-box-desc">${selectedOpt.explanation}</div>
+      </div>
+    `;
+  } else {
+    htmlMsg += `
+      <div class="feedback-box-section">
+        <div class="feedback-box-title wrong-title">❌ なぜ「${selectedOpt.text}」はダメなのか？</div>
+        <div class="feedback-box-desc">${selectedOpt.explanation}</div>
+      </div>
+      <div class="feedback-box-section" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 8px;">
+        <div class="feedback-box-title best-title">🏆 正解は「${bestOpt.text}」</div>
+        <div class="feedback-box-desc">${bestOpt.explanation}</div>
+      </div>
+    `;
+    if (!isFinalStreet) {
+      htmlMsg += `<div style="margin-top: 8px; font-size: 0.82em; color: #888;">※正解の「${bestOpt.text}」を選んだ前提で次のストリートへ進みます。</div>`;
+    }
+  }
+
+  document.getElementById('system-message').innerHTML = htmlMsg;
+
+  // 次へ進むボタンの復元
+  const nextBtn = document.getElementById('next-btn');
+  if (!isFinalStreet) {
+    nextBtn.className = "next-btn";
+    nextBtn.innerText = `▶ ${hand.streets[currentStreetIdx + 1].name} へ進む`;
+  } else if (currentHandIdx < hands.length - 1) {
+    nextBtn.className = "next-btn hand-btn";
+    nextBtn.innerText = `⏭ 次のハンドへ (Hand ${currentHandIdx + 2}/${hands.length})`;
+  } else {
+    nextBtn.className = "next-btn hand-btn";
+    nextBtn.innerText = `🏁 全ハンド完了！結果を見る`;
+  }
 }
 
 function resetNewGame() {
@@ -285,8 +374,8 @@ function getSaveKey(difficulty) {
   return `${SAVE_KEY_PREFIX}${getTodayKey()}_${difficulty}`;
 }
 
-// 1アクションごとに進行状況を保存
-function saveCurrentProgress() {
+// --- オートセーブ関数を更新 ---
+function saveCurrentProgress(isInFeedback = false, lastSelectedOpt = null) {
   const saveKey = getSaveKey(selectedDifficulty);
   const progressData = {
     dateKey: getTodayKey(),
@@ -299,7 +388,10 @@ function saveCurrentProgress() {
     sessionTheoryBonusTotal: sessionTheoryBonusTotal,
     sessionPotNetTotal: sessionPotNetTotal,
     tableStack: tableStack,
-    currentHandInvested: currentHandInvested
+    currentHandInvested: currentHandInvested,
+    // ▼ 解説表示状態のフラグと選択肢データを保持
+    isInFeedback: isInFeedback,
+    lastSelectedOpt: lastSelectedOpt
   };
   localStorage.setItem(saveKey, JSON.stringify(progressData));
 }
@@ -389,7 +481,7 @@ function handleChoice(selectedOpt, allOptions) {
 
   const totalDelta = Math.round((theoryBonus + handNetResult) * 10) / 10;
   updateSessionProfitUI(totalDelta);
-  saveCurrentProgress();
+  saveCurrentProgress(true, selectedOpt);
 
   // 5. フィードバック画面へスワップ表示
   document.getElementById('choice-state').style.display = 'none';
@@ -466,13 +558,17 @@ function nextStep() {
   const hand = hands[currentHandIdx];
   if (currentStreetIdx < hand.streets.length - 1) {
     currentStreetIdx++;
+    // 次のストリートに進んだので、解説中フラグをfalseにして保存
+    saveCurrentProgress(false, null);
     loadStreet();
   } else {
     currentHandIdx++;
     if (currentHandIdx < hands.length) {
+      // 次のハンドに進んだので、解説中フラグをfalseにして保存
+      saveCurrentProgress(false, null);
       startHand();
     } else {
-      showResult(); // Async関数に変更したのでそのまま呼び出す
+      showResult();
     }
   }
 }
