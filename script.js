@@ -81,10 +81,19 @@ async function initApp() {
       .eq('user_id', currentUserId)
       .order('created_at', { ascending: true });
 
-    if (hError) throw hError;
-    cloudHistory = historyDataFromCloud || [];
+    // (initApp関数内、Supabaseから daily_records 取得の直後)
+    if (hError) {
+      console.warn('クラウド履歴の取得に失敗しました。ローカル保存分を使用します。', hError);
+    }
+    
+    // クラウド取得分、またはローカル保存分のフォールバック
+    const localSavedHistory = localStorage.getItem('poker_theory_local_history');
+    const parsedLocal = localSavedHistory ? JSON.parse(localSavedHistory) : [];
+    
+    cloudHistory = (historyDataFromCloud && historyDataFromCloud.length > 0) 
+      ? historyDataFromCloud 
+      : parsedLocal;
 
-    // ホーム画面の統計を描画
     renderHomeStats();
   } catch (error) {
     console.error('初期化エラー:', error);
@@ -175,20 +184,58 @@ function startGame(difficulty) {
   selectedDifficulty = difficulty;
   hands = allHandsData.filter(h => h.difficulty === difficulty).slice(0, 5);
 
-  currentHandIdx = 0;
-  handScores = [];
-  historyData = [];
+  if (hands.length === 0) {
+    alert("本日の問題が見つかりませんでした。");
+    return;
+  }
 
-  sessionProfit = 0;
-  sessionTheoryBonusTotal = 0;
-  sessionPotNetTotal = 0;
+  // 中断セーブがあるか確認
+  const saved = localStorage.getItem(getSaveKey(difficulty));
+  if (saved) {
+    try {
+      const p = JSON.parse(saved);
+      currentHandIdx = p.currentHandIdx;
+      currentStreetIdx = p.currentStreetIdx;
+      handScores = p.handScores || [];
+      historyData = p.historyData || [];
+      sessionProfit = p.sessionProfit || 0;
+      sessionTheoryBonusTotal = p.sessionTheoryBonusTotal || 0;
+      sessionPotNetTotal = p.sessionPotNetTotal || 0;
+      tableStack = p.tableStack !== undefined ? p.tableStack : 100;
+      currentHandInvested = p.currentHandInvested || 0;
+    } catch (e) {
+      console.error("セーブデータ読み込み失敗、初期化します", e);
+      resetNewGame();
+    }
+  } else {
+    resetNewGame();
+  }
 
   document.getElementById('home-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
 
   updateSessionProfitUI(0);
-  startHand();
+  
+  // 復帰時：手札や相手カードを正しく描画
+  const hand = hands[currentHandIdx];
+  document.getElementById('villain-cards').innerHTML = `
+    <div class="card back"></div>
+    <div class="card back"></div>
+  `;
+  loadStreet();
+}
+
+function resetNewGame() {
+  currentHandIdx = 0;
+  currentStreetIdx = 0;
+  handScores = [];
+  historyData = [];
+  sessionProfit = 0;
+  sessionTheoryBonusTotal = 0;
+  sessionPotNetTotal = 0;
+  tableStack = 100;
+  currentHandInvested = 0;
 }
 
 function returnToHome() {
@@ -229,6 +276,37 @@ function updateSessionProfitUI(delta) {
 function sanitizeCardHtml(htmlStr) {
   if (!htmlStr) return "";
   return htmlStr.replace(/\\/g, ''); // すべてのバックスラッシュを消去
+}
+
+// --- オートセーブ（中断復帰・リセマラ防止） ---
+const SAVE_KEY_PREFIX = 'poker_progress_';
+
+function getSaveKey(difficulty) {
+  return `${SAVE_KEY_PREFIX}${getTodayKey()}_${difficulty}`;
+}
+
+// 1アクションごとに進行状況を保存
+function saveCurrentProgress() {
+  const saveKey = getSaveKey(selectedDifficulty);
+  const progressData = {
+    dateKey: getTodayKey(),
+    difficulty: selectedDifficulty,
+    currentHandIdx: currentHandIdx,
+    currentStreetIdx: currentStreetIdx,
+    handScores: handScores,
+    historyData: historyData,
+    sessionProfit: sessionProfit,
+    sessionTheoryBonusTotal: sessionTheoryBonusTotal,
+    sessionPotNetTotal: sessionPotNetTotal,
+    tableStack: tableStack,
+    currentHandInvested: currentHandInvested
+  };
+  localStorage.setItem(saveKey, JSON.stringify(progressData));
+}
+
+// セッション完了時に進行中データを消去
+function clearCurrentProgress(difficulty) {
+  localStorage.removeItem(getSaveKey(difficulty));
 }
 
 function loadStreet() {
@@ -311,6 +389,7 @@ function handleChoice(selectedOpt, allOptions) {
 
   const totalDelta = Math.round((theoryBonus + handNetResult) * 10) / 10;
   updateSessionProfitUI(totalDelta);
+  saveCurrentProgress();
 
   // 5. フィードバック画面へスワップ表示
   document.getElementById('choice-state').style.display = 'none';
@@ -400,6 +479,9 @@ function nextStep() {
 
 // --- リザルト画面表示 ＆ Supabaseへの保存 ---
 async function showResult() {
+  // 全問解き終わったので中断データをクリア
+  clearCurrentProgress(selectedDifficulty);
+
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'flex';
 
@@ -453,26 +535,33 @@ async function savePlayHistory(profit, emojis) {
     is_official: isOfficial
   };
 
+  // 1. ローカル側には即時追加してUIの更新漏れを防ぐ
+  cloudHistory.push(newRecord);
+  
+  // スマホのローカルストレージにもバックアップ保存
   try {
-    // 1. Supabaseへデータを挿入
+    localStorage.setItem('poker_theory_local_history', JSON.stringify(cloudHistory));
+  } catch (e) {
+    console.warn("LocalStorage save error", e);
+  }
+
+  // 2. Supabaseへ非同期送信
+  try {
     const { data, error } = await supabaseClient
       .from('daily_records')
       .insert([newRecord])
       .select();
 
-    if (error) throw error;
-
-    // 2. 成功したらローカルのクラウド履歴配列にも追加して画面を更新
-    if (data && data.length > 0) {
-      cloudHistory.push(data[0]);
+    if (error) {
+      console.error('Supabase保存エラー詳細:', error);
     }
   } catch (error) {
-    console.error('Supabase保存エラー:', error.message);
-    alert('スコアの保存に失敗しました。通信環境を確認してください。');
+    console.error('Supabase通信例外:', error);
   }
 
   return isOfficial;
 }
+
 
 function renderReviewList() {
   const reviewList = document.getElementById('review-list');
