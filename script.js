@@ -530,11 +530,12 @@ function playAd() {
 }
 
 function shareResult() {
-  let shareText = `♠️ Daily Poker Theory [${selectedDifficulty} 5問]\n本日の収支: ${sessionProfit >= 0 ? '+' : ''}${sessionProfit} BB (定石:${sessionTheoryBonusTotal >= 0 ? '+' : ''}${sessionTheoryBonusTotal} / 実戦:${sessionPotNetTotal >= 0 ? '+' : ''}${sessionPotNetTotal})\n\n`;
+  const siteUrl = "https://holdemdaily.com";
+  let shareText = `♠️ Hold'em Daily [${selectedDifficulty} 5問]\n本日の収支: ${sessionProfit >= 0 ? '+' : ''}${sessionProfit} BB (定石:${sessionTheoryBonusTotal >= 0 ? '+' : ''}${sessionTheoryBonusTotal} / 実戦:${sessionPotNetTotal >= 0 ? '+' : ''}${sessionPotNetTotal})\n\n`;
   hands.forEach((hand, idx) => {
     if (handScores[idx]) shareText += `Hand ${idx + 1}: ${handScores[idx].join('')}\n`;
   });
-  shareText += `#PokerTheory #ポーカーパズル`;
+  shareText += `\n今日の定石に挑戦 ➔ ${siteUrl}\n#HoldemDaily #ポーカーパズル`;
   navigator.clipboard.writeText(shareText).then(() => alert("結果をコピーしました！友達とスコアを競おう！"));
 }
 
