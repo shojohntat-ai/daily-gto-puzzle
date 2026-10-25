@@ -234,9 +234,11 @@ function sanitizeCardHtml(htmlStr) {
 function loadStreet() {
   const hand = hands[currentHandIdx];
   const street = hand.streets[currentStreetIdx];
+  const todayKey = getTodayKey(); // "2026-10-24" のような文字列
+  const [year, month, day] = todayKey.split('-');
 
   document.getElementById('difficulty-badge').innerText = hand.difficulty;
-  document.getElementById('hand-theme').innerText = `テーマ: ${hand.theme}`;
+  document.getElementById('hand-theme').innerText = `${Number(month)}月${Number(day)}日の問題`;
   document.getElementById('hand-progress').innerText = `Hand ${currentHandIdx + 1}/${hands.length}`;
   document.getElementById('position-text').innerText = hand.position;
   document.getElementById('villain-pos').innerText = hand.villainPos || "BB";
@@ -335,8 +337,13 @@ function handleChoice(selectedOpt, allOptions) {
 
   // 分かりやすい2段構成の解説文をHTMLで構築
 // 分かりやすい2段構成の解説文をHTMLで構築（余計な改行スペースを排除）
-  let htmlMsg = `<div style="margin-bottom: 10px; color: #aaa; font-size: 0.88em; font-weight: bold;">▶ 展開: ${selectedOpt.outcome}</div>`;
 
+let htmlMsg = "";
+// 最終ストリート（決着時）ならテーマを初公開する
+if (isFinalStreet) {
+  htmlMsg += `<div style="margin-bottom: 10px; font-size: 1.05em; font-weight: bold; color: #64b5f6;">💡 今回のテーマ: ${hand.theme}</div>`;
+}
+htmlMsg += `<div style="margin-bottom: 10px; color: #aaa; font-size: 0.88em; font-weight: bold;">▶ 展開: ${selectedOpt.outcome}</div>`;
   if (selectedOpt.grade === 'best') {
     htmlMsg += `
       <div class="feedback-box-section">

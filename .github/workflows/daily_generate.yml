@@ -1,0 +1,31 @@
+name: Generate Daily Questions
+
+on:
+  schedule:
+    # 毎日 日本時間の 00:00 に実行（UTC時刻の 15:00 を指定）
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+    # 手動実行用ボタンも有効にしておく
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install supabase google-genai
+
+      - name: Run generation script
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_daily_questions.py
