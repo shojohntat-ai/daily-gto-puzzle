@@ -124,7 +124,10 @@
 
     <!-- インフォバー（テーブル上のStackは毎ハンド100BB基準で独立！） -->
     <div class="info-bar">
-      <div>📍 <span id="position-text"></span></div>
+      <div>
+        📍 <span id="position-text">BTN vs BB</span>
+        <span id="preflop-action-text" style="font-size: 0.85em; color: #64b5f6; margin-left: 6px;">(あなたRaise ➔ 相手Call)</span>
+      </div>
       <div class="pot-pill">💰 Pot: <span id="pot-text"></span> BB</div>
       <div class="stack-pill">🥞 残りStack: <span id="stack-text">97.5</span> BB</div>
     </div>
@@ -154,7 +157,6 @@
         <div class="cards-container" id="hero-cards"></div>
         <div class="hero-status">
           <div class="hero-badge" id="hero-badge"></div>
-          <div class="invest-text">このハンドの投資: <span id="hero-invested">2.5</span> BB</div>
         </div>
       </div>
     </div>

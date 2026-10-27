@@ -196,17 +196,24 @@ function startGame(difficulty) {
   if (saved) {
     try {
       const p = JSON.parse(saved);
-      currentHandIdx = p.currentHandIdx;
-      currentStreetIdx = p.currentStreetIdx;
+      currentHandIdx = Math.min(p.currentHandIdx || 0, hands.length - 1);
+      currentStreetIdx = p.currentStreetIdx || 0;
       handScores = p.handScores || [];
       historyData = p.historyData || [];
       sessionProfit = p.sessionProfit || 0;
       sessionTheoryBonusTotal = p.sessionTheoryBonusTotal || 0;
       sessionPotNetTotal = p.sessionPotNetTotal || 0;
-      tableStack = p.tableStack !== undefined ? p.tableStack : 100;
-      currentHandInvested = p.currentHandInvested || 0;
       
-      // 解説画面を見ていたかチェック
+      const hand = hands[currentHandIdx];
+      currentHandInvested = Number(hand.preflopInvested) || 2.5;
+      
+      // スタックが異常に減衰していた場合はリセット修復
+      if (p.tableStack === undefined || p.tableStack <= 10) {
+        tableStack = Math.round((100 - currentHandInvested) * 10) / 10;
+      } else {
+        tableStack = p.tableStack;
+      }
+      
       restoreFeedback = !!p.isInFeedback;
       savedOpt = p.lastSelectedOpt;
     } catch (e) {
@@ -226,7 +233,7 @@ function startGame(difficulty) {
   // 盤面描画
   loadStreet();
 
-  // もし直前に回答して解説を見ていた場合は、強制的に解説画面を復元する
+  // 直前に回答済みだった場合のみ解説復元
   if (restoreFeedback && savedOpt) {
     const hand = hands[currentHandIdx];
     const street = hand.streets[currentStreetIdx];
@@ -337,13 +344,18 @@ function returnToHome() {
 function startHand() {
   const hand = hands[currentHandIdx];
   currentStreetIdx = 0;
-  currentHandInvested = hand.preflopInvested || 2.5;
+  
+  // プリフロップ投資額（デフォルト2.5）
+  currentHandInvested = Number(hand.preflopInvested) || 2.5;
+  // ★重要：スタックは毎回100BBから投資額を引いた値にリセット！
   tableStack = Math.round((100 - currentHandInvested) * 10) / 10;
 
+  // 相手カードを裏向きにリセット
   document.getElementById('villain-cards').innerHTML = `
     <div class="card back"></div>
     <div class="card back"></div>
   `;
+
   loadStreet();
 }
 
@@ -403,38 +415,86 @@ function clearCurrentProgress(difficulty) {
 
 function loadStreet() {
   const hand = hands[currentHandIdx];
-  const street = hand.streets[currentStreetIdx];
-  const todayKey = getTodayKey(); // "2026-10-24" のような文字列
-  const [year, month, day] = todayKey.split('-');
+  if (!hand) {
+    console.error("ハンドデータが存在しません");
+    returnToHome();
+    return;
+  }
 
-  document.getElementById('difficulty-badge').innerText = hand.difficulty;
-  document.getElementById('hand-theme').innerText = `${Number(month)}月${Number(day)}日の問題`;
+  const street = hand.streets ? hand.streets[currentStreetIdx] : null;
+  if (!street) {
+    console.error("ストリートデータが存在しません");
+    returnToHome();
+    return;
+  }
+
+  // 最初のストリートなら相手手札を裏向きに
+  if (currentStreetIdx === 0) {
+    document.getElementById('villain-cards').innerHTML = `
+      <div class="card back"></div>
+      <div class="card back"></div>
+    `;
+  }
+
+  // バッジとヘッダー
+  document.getElementById('difficulty-badge').innerText = hand.difficulty || "";
+  const todayKey = getTodayKey();
+  const parts = todayKey.split('-');
+  document.getElementById('hand-theme').innerText = `${Number(parts[1])}月${Number(parts[2])}日の問題`;
   document.getElementById('hand-progress').innerText = `Hand ${currentHandIdx + 1}/${hands.length}`;
-  document.getElementById('position-text').innerText = hand.position;
+
+  // インフォバー
+  document.getElementById('position-text').innerText = hand.position || "BTN vs BB";
+  const preflopEl = document.getElementById('preflop-action-text');
+  if (preflopEl) {
+    if (hand.position && (hand.position.includes("BTN vs BB") || hand.position.includes("CO vs BB"))) {
+      preflopEl.innerText = "(あなたOpen ➔ 相手Call)";
+    } else if (hand.position && (hand.position.includes("3BP") || hand.position.includes("3-Bet"))) {
+      preflopEl.innerText = "(3ベットポット)";
+    } else {
+      preflopEl.innerText = `(投資: ${currentHandInvested} BB)`;
+    }
+  }
+
   document.getElementById('villain-pos').innerText = hand.villainPos || "BB";
   document.getElementById('villain-action').innerText = street.villainAction || "Check";
 
-  document.getElementById('pot-text').innerText = street.pot;
+  document.getElementById('pot-text').innerText = street.pot || "5.5";
   document.getElementById('stack-text').innerText = tableStack;
-  document.getElementById('hero-invested').innerText = currentHandInvested;
 
-  document.getElementById('street-label').innerText = street.name.toUpperCase();
+  // カード・ボード描画
+  document.getElementById('street-label').innerText = (street.name || "FLOP").toUpperCase();
   document.getElementById('board-cards').innerHTML = sanitizeCardHtml(street.board);
   document.getElementById('hero-cards').innerHTML = sanitizeCardHtml(hand.heroHand);
   document.getElementById('hero-badge').innerText = street.badge || "";
-  document.getElementById('question-prompt').innerText = street.prompt;
+  document.getElementById('question-prompt').innerText = street.prompt || "";
 
+  // 画面状態の切り替え
   document.getElementById('choice-state').style.display = 'flex';
   document.getElementById('feedback-state').style.display = 'none';
 
+  // 選択肢ボタンの再生成
   const choicesDiv = document.getElementById('choices');
   choicesDiv.innerHTML = '';
 
-  street.options.forEach((opt) => {
+  const options = street.options || [];
+  
+  // ▼ 新規追加: 選択肢をランダムにシャッフルする処理
+  const shuffledOptions = [...options];
+  for (let i = shuffledOptions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+  }
+
+  // シャッフルされた配列を使ってボタンを生成
+  shuffledOptions.forEach((opt) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerText = opt.text;
-    btn.onclick = () => handleChoice(opt, street.options);
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    btn.style.backgroundColor = '';
+    btn.onclick = () => handleChoice(opt, shuffledOptions);
     choicesDiv.appendChild(btn);
   });
 }
@@ -442,6 +502,14 @@ function loadStreet() {
 function handleChoice(selectedOpt, allOptions) {
   const hand = hands[currentHandIdx];
   const street = hand.streets[currentStreetIdx];
+  
+  // クラッシュ防止の安全策（ストリートが読み込めない場合は処理を中断）
+  if (!street) {
+    console.error("ストリートデータが見つかりません。状態をリセットします。");
+    returnToHome();
+    return;
+  }
+
   const isFinalStreet = (currentStreetIdx === hand.streets.length - 1);
   const bestOpt = allOptions.find(o => o.grade === 'best') || allOptions[0];
 
@@ -457,101 +525,52 @@ function handleChoice(selectedOpt, allOptions) {
     bestOpt: bestOpt
   });
 
-  // 2. ショーダウン演出
-  if (selectedOpt.showdown || isFinalStreet) {
-    const vCards = document.getElementById('villain-cards');
-    vCards.innerHTML = sanitizeCardHtml(hand.villainHand);
-    vCards.querySelectorAll('.card').forEach(c => c.classList.add('reveal'));
-  }
-
-  // 3. テーブル投資処理（定石の投資額で次へ進む）
-  const costToContinue = isFinalStreet ? (selectedOpt.investCost || 0) : (bestOpt.investCost || 0);
-  tableStack = Math.round((tableStack - costToContinue) * 10) / 10;
-  currentHandInvested = Math.round((currentHandInvested + costToContinue) * 10) / 10;
-  document.getElementById('stack-text').innerText = tableStack;
-  document.getElementById('hero-invested').innerText = currentHandInvested;
-
-  // 4. スコア計算
-  const theoryBonus = selectedOpt.theoryBonus !== undefined ? selectedOpt.theoryBonus : 
-                      (selectedOpt.grade === 'best' ? 15 : (selectedOpt.grade === 'ok' ? 0 : -15));
-  const handNetResult = isFinalStreet ? (selectedOpt.handNetResult || 0) : 0;
-
-  sessionTheoryBonusTotal = Math.round((sessionTheoryBonusTotal + theoryBonus) * 10) / 10;
-  sessionPotNetTotal = Math.round((sessionPotNetTotal + handNetResult) * 10) / 10;
-
-  const totalDelta = Math.round((theoryBonus + handNetResult) * 10) / 10;
-  updateSessionProfitUI(totalDelta);
-  saveCurrentProgress(true, selectedOpt);
-
-  // 5. フィードバック画面へスワップ表示
-  document.getElementById('choice-state').style.display = 'none';
-  document.getElementById('feedback-state').style.display = 'flex';
-
-  const resultDiv = document.getElementById('feedback-result');
-  const comparisonDiv = document.getElementById('action-comparison');
-  
-  resultDiv.className = 'feedback-grade';
-  
-  if (selectedOpt.grade === 'best') {
-    resultDiv.innerText = `🏆 正解！ 最善手`;
-    resultDiv.classList.add('correct');
-    comparisonDiv.innerHTML = `<span class="action-tag best">あなたの選択: ${selectedOpt.text}</span>`;
-  } else {
-    resultDiv.innerText = selectedOpt.grade === 'ok' ? `⚠️ 妥協手` : `❌ 不正解（ミス）`;
-    resultDiv.classList.add(selectedOpt.grade === 'ok' ? 'ok' : 'wrong');
-    // あなたの選択と正解を並べて表示
-    comparisonDiv.innerHTML = `
-      <span class="action-tag user">あなた: ${selectedOpt.text}</span>
-      <span class="action-tag best">正解: ${bestOpt.text}</span>
-    `;
-  }
-
-  // 分かりやすい2段構成の解説文をHTMLで構築
-// 分かりやすい2段構成の解説文をHTMLで構築（余計な改行スペースを排除）
-
-let htmlMsg = "";
-// 最終ストリート（決着時）ならテーマを初公開する
-if (isFinalStreet) {
-  htmlMsg += `<div style="margin-bottom: 10px; font-size: 1.05em; font-weight: bold; color: #64b5f6;">💡 今回のテーマ: ${hand.theme}</div>`;
-}
-htmlMsg += `<div style="margin-bottom: 10px; color: #aaa; font-size: 0.88em; font-weight: bold;">▶ 展開: ${selectedOpt.outcome}</div>`;
-  if (selectedOpt.grade === 'best') {
-    htmlMsg += `
-      <div class="feedback-box-section">
-        <div class="feedback-box-title best-title">💡 定石の理由 (+${theoryBonus} BB)</div>
-        <div class="feedback-box-desc">${selectedOpt.explanation}</div>
-      </div>
-    `;
-  } else {
-    htmlMsg += `
-      <div class="feedback-box-section">
-        <div class="feedback-box-title wrong-title">❌ なぜ「${selectedOpt.text}」はダメなのか？</div>
-        <div class="feedback-box-desc">${selectedOpt.explanation}</div>
-      </div>
-      <div class="feedback-box-section" style="border-top: 1px dashed #444; padding-top: 8px; margin-top: 8px;">
-        <div class="feedback-box-title best-title">🏆 正解は「${bestOpt.text}」</div>
-        <div class="feedback-box-desc">${bestOpt.explanation}</div>
-      </div>
-    `;
-    if (!isFinalStreet) {
-      htmlMsg += `<div style="margin-top: 8px; font-size: 0.82em; color: #888;">※正解の「${bestOpt.text}」を選んだ前提で次のストリートへ進みます。</div>`;
+  // ▼ 新規実装：押した瞬間に選択肢を色付けしてフィードバックする ▼
+  const btns = document.getElementById('choices').querySelectorAll('.choice-btn');
+  btns.forEach(btn => {
+    btn.style.pointerEvents = 'none'; // 連打防止
+    const optData = allOptions.find(o => o.text === btn.innerText);
+    if (optData) {
+      if (optData.grade === 'best') btn.style.backgroundColor = '#4caf50'; // 🟩 緑
+      else if (optData.grade === 'ok') btn.style.backgroundColor = '#ff9800'; // 🟨 黄
+      else btn.style.backgroundColor = '#f44336'; // 🟥 赤
+      
+      // ユーザーが選んだボタン以外は少し暗くする
+      if (optData.text !== selectedOpt.text) {
+        btn.style.opacity = '0.4';
+      }
     }
-  }
+  });
 
-  document.getElementById('system-message').innerHTML = htmlMsg;
+  // 800ミリ秒（0.8秒）待ってから解説画面へ遷移させる
+  setTimeout(() => {
+    if (selectedOpt.showdown || isFinalStreet) {
+      const vCards = document.getElementById('villain-cards');
+      vCards.innerHTML = sanitizeCardHtml(hand.villainHand);
+      vCards.querySelectorAll('.card').forEach(c => c.classList.add('reveal'));
+    }
 
-  // 次へ進むボタン
-  const nextBtn = document.getElementById('next-btn');
-  if (!isFinalStreet) {
-    nextBtn.className = "next-btn";
-    nextBtn.innerText = `▶ ${hand.streets[currentStreetIdx + 1].name} へ進む`;
-  } else if (currentHandIdx < hands.length - 1) {
-    nextBtn.className = "next-btn hand-btn";
-    nextBtn.innerText = `⏭ 次のハンドへ (Hand ${currentHandIdx + 2}/${hands.length})`;
-  } else {
-    nextBtn.className = "next-btn hand-btn";
-    nextBtn.innerText = `🏁 全ハンド完了！結果を見る`;
-  }
+    const costToContinue = isFinalStreet ? (selectedOpt.investCost || 0) : (bestOpt.investCost || 0);
+    tableStack = Math.round((tableStack - costToContinue) * 10) / 10;
+    
+    // UI側の投資額表示要素が残っている場合のみ更新
+    const stackEl = document.getElementById('stack-text');
+    if (stackEl) stackEl.innerText = tableStack;
+
+    const theoryBonus = selectedOpt.theoryBonus !== undefined ? selectedOpt.theoryBonus : 
+                        (selectedOpt.grade === 'best' ? 15 : (selectedOpt.grade === 'ok' ? 0 : -15));
+    const handNetResult = isFinalStreet ? (selectedOpt.handNetResult || 0) : 0;
+
+    sessionTheoryBonusTotal = Math.round((sessionTheoryBonusTotal + theoryBonus) * 10) / 10;
+    sessionPotNetTotal = Math.round((sessionPotNetTotal + handNetResult) * 10) / 10;
+    const totalDelta = Math.round((theoryBonus + handNetResult) * 10) / 10;
+    
+    updateSessionProfitUI(totalDelta);
+    saveCurrentProgress(true, selectedOpt);
+
+    // フィードバック画面の描画関数を呼び出し（前回の復元用関数を使い回す）
+    restoreFeedbackUI(hand, street, selectedOpt);
+  }, 800);
 }
 
 function nextStep() {

@@ -38,16 +38,29 @@ SYSTEM_INSTRUCTION = """
 あなたはWebアプリ「Daily Poker Theory」向けの問題自動生成エンジンです。
 ポーカー初心者が直感的に定石（セオリー）を学べるパズルデータを、厳格なJSON形式で出力してください。
 
+【絶対遵守のルール（違反厳禁）】
+1. ストリートの制限: 必ず「Flop」から開始すること。Preflopのアクションを選ぶ問題は生成しない。
+2. プレースホルダー禁止: 「Hidden Option」「N/A」などのダミーテキストは絶対に出力しない。
+3. ポーカー用語と役の正確性:
+   - 手札にAがあり、ボードの最高カードとヒットしている場合は必ず「トップペア・トップキッカー」とする。「ミドルキッカー」と誤認しないこと。
+   - オーバーペア、セット、ドローなどの役判定を絶対に間違えないこと。
+4. 選択肢のグラデーション（評価基準）:
+   - 4つの選択肢は「best (1つ)」「ok (1〜2つ)」「bad (1〜2つ)」で構成する。
+   - 【重要】「33% Bet」が正解の場面で「75% Bet」を選んだ場合、完全なミス（bad）ではなく「ok（妥協手）」と評価すること。極端なオーバーベットや致命的なフォールドのみを「bad」とする。
+
+【シチュエーションとレンジの動的設定】
+- 常に2.5BBのオープンレイズポットにする必要はありません。3ベットポット（投資額 7.5BB〜10BB、Pot 16BB〜22BB等）や4ベットポット（投資額 20BB〜25BB、Pot 40BB〜52BB等）も積極的に生成してください。
+- 3ベットや4ベットのシチュエーションを生成する場合、両者のハンド（heroHand, villainHand）は、その激しいアクションにコールまたはレイズできる現実的で強いレンジ（プレミアムハンド、強ポケット、強いスーテッド等）に必ず絞り込むこと。
+
 【カードHTMLの仕様（最重要）】
 カードは必ず以下の形式で出力すること：
 <div class="card s">A♠</div> (s=スペード黒, h=ハート赤, d=ダイヤ青, c=クラブ緑)
 ※文字抜けを防ぐため、必ずクラス名（s, h, d, c）を付与すること。
 
 【ゲームルールと数値の整合性】
-1. テーブルスタック: 各問題の開始時は100BB持ち（プリフロップ投資後 97.5BB 等）。
+1. テーブルスタック: 各問題の開始時は100BB持ちからプリフロップ投資額を引いた状態（投資後 97.5BB、3ベット投資後 90BB 等）。
 2. アクション選択肢 (options) の厳格ルール【必須】:
    - 各ストリートの "options" 配列には、必ず【厳密に4つの選択肢】を含めること（2個や3個は不可）。
-   - 4つのうち「best」は必ず1つ、残りの3つは「ok」または「bad」とすること。
    - ボタン表記は「Check」「Call」「Fold」「33% Bet (1.8 BB)」「All-in」など、純粋なアクション名と数値のみ。
 3. フィードバックと解説:
    - shortExp: 「ドライボードの鉄則サイズ！」「稼げるチャンスの放棄」など簡潔に。
@@ -63,12 +76,37 @@ SYSTEM_INSTRUCTION = """
    - 原則として「bestを選べばプレイヤーが勝利してハンド収支がプラスになる」展開にすること。
 """
 
+import time
+import json
+
 def generate_questions_for(difficulty: str, count: int = 5):
+    # 難易度に応じた選択肢スタイルの指示
+    if difficulty == "初心者":
+        options_rule = """
+        【初心者向けの選択肢ルール（最重要）】
+        ベットサイズの違い（小さなベットと大きなベットなど）で迷わせる問題は禁止です。
+        選択肢は以下のシンプルなアクションから【厳密に4つ】選んで構成してください。
+        
+        ボタン表記の例: 「Bet (ポットに応じた適正額 BB)」「All-in」「Check」「Call」「Fold」
+        ※「Bet」や「Raise」の選択肢は必ず1つだけにすること。
+        ※極端な選択肢として「All-in」を必ず含めること。
+        """
+    else:
+        options_rule = """
+        【中級者向けの選択肢ルール】
+        ベットサイズを含めた戦略的な4択にしてください。
+        ボタン表記の例:「33% Bet (1.8 BB)」「75% Bet (4.1 BB)」「Check」「Fold」「All-in」
+        ボードの性質に応じたサイジングの使い分けを学ばせる構成にしてください。
+        """
+
     prompt = f"""
     難易度「{difficulty}」の問題を {count} 問生成してください。
     全問が3ストリート完走型である必要はありません。1手完結型、2ストリート型、3ストリート完走型をバランスよく混ぜてください。
 
+    {options_rule}
+
     【重要】各ストリートの "options" には、必ず【4つの選択肢】（bestが1つ、他3つはokまたはbad）を入れてください。
+    また、JSON内の文字列でダブルクォーテーションを使用する場合は、必ず適切にエスケープしてください。
 
     出力形式（JSON配列のみ）：
     [
@@ -95,7 +133,9 @@ def generate_questions_for(difficulty: str, count: int = 5):
                 "theoryBonus": 15,
                 "shortExp": "ドライボードの鉄則サイズ！",
                 "outcome": "あなた: 1.8BB Bet ➔ 相手: Call",
-                "explanation": "ドライなボードでは小さく打つことで、相手の弱いペアからも広くコールを引き出せます。"
+                "explanation": "ドライなボードでは小さく打つことで、相手の弱いペアからも広くコールを引き出せます。",
+                "showdown": true,
+                "handNetResult": 15.5
               }},
               {{
                 "text": "Check",
@@ -104,7 +144,9 @@ def generate_questions_for(difficulty: str, count: int = 5):
                 "theoryBonus": -15,
                 "shortExp": "バリューを取り逃がしています",
                 "outcome": "定石の33% Betルートへ進行",
-                "explanation": "チェックすると相手にフリーカードを与えてしまいます。"
+                "explanation": "チェックすると相手にフリーカードを与えてしまいます。",
+                "showdown": true,
+                "handNetResult": -2.5
               }},
               {{
                 "text": "75% Bet (4.1 BB)",
@@ -113,7 +155,9 @@ def generate_questions_for(difficulty: str, count: int = 5):
                 "theoryBonus": 5,
                 "shortExp": "少し大きめです",
                 "outcome": "定石の33% Betルートへ進行",
-                "explanation": "悪くありませんが相手の弱い手が降りやすくなります。"
+                "explanation": "悪くありませんが相手の弱い手が降りやすくなります。",
+                "showdown": true,
+                "handNetResult": 8.0
               }},
               {{
                 "text": "All-in",
@@ -122,7 +166,9 @@ def generate_questions_for(difficulty: str, count: int = 5):
                 "theoryBonus": -20,
                 "shortExp": "極端すぎます",
                 "outcome": "定石の33% Betルートへ進行",
-                "explanation": "相手が逃げてしまいます。"
+                "explanation": "相手が逃げてしまいます。",
+                "showdown": true,
+                "handNetResult": -2.5
               }}
             ]
           }}
@@ -131,17 +177,34 @@ def generate_questions_for(difficulty: str, count: int = 5):
     ]
     """
 
-    response = ai_client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            response_mime_type="application/json",
-            temperature=0.7,
-        ),
-    )
-    return json.loads(response.text)
-
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = ai_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    response_mime_type="application/json",
+                    temperature=0.7,
+                ),
+            )
+            
+            raw_text = response.text
+            # 余計なマークダウン記法が混ざった場合の除去処理
+            if raw_text.startswith("```json"):
+                raw_text = raw_text.replace("```json", "").replace("```", "").strip()
+                
+            return json.loads(raw_text)
+            
+        except json.decoder.JSONDecodeError as e:
+            print(f"⚠️ JSONパースエラー発生 ({attempt + 1}/{max_retries}回目): {e}")
+            if attempt == max_retries - 1:
+                print("❌ 規定回数リトライしましたが、有効なJSONが生成されませんでした。")
+                print(f"【エラーとなった生の出力テキスト】\n{response.text}")
+                raise e
+            print("🔄 3秒後に再生成を試みます...")
+            time.sleep(3)
 # ==========================================
 # 3. Supabaseへの一括登録処理
 # ==========================================
